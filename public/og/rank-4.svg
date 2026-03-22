@@ -1,54 +1,15 @@
-<svg width="800" height="400" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#0f172a"/>
-      <stop offset="100%" style="stop-color:#1a2332"/>
-    </linearGradient>
-  </defs>
-  <rect width="800" height="400" fill="url(#bg)"/>
+<svg width="600" height="600" xmlns="http://www.w3.org/2000/svg">
+  <rect width="600" height="600" fill="#ffffff"/>
   
-  <!-- Grid dots -->
-  <pattern id="dots" width="30" height="30" patternUnits="userSpaceOnUse">
-    <circle cx="15" cy="15" r="0.8" fill="rgba(255,255,255,0.06)"/>
-  </pattern>
-  <rect width="800" height="400" fill="url(#dots)"/>
+  <!-- Subtle border -->
+  <rect x="1" y="1" width="598" height="598" rx="32" fill="none" stroke="#e5e7eb" stroke-width="2"/>
   
-  <!-- Decorative circle -->
-  <circle cx="650" cy="200" r="160" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
-  <circle cx="650" cy="200" r="100" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+  <!-- Large bold number -->
+  <text x="300" y="340" font-family="Arial,Helvetica,sans-serif" font-size="240" font-weight="900" fill="#0a0a0a" text-anchor="middle" dominant-baseline="central">4</text>
   
-  <!-- Rank number large -->
-  <text x="620" y="260" font-family="Arial,Helvetica,sans-serif" font-size="200" font-weight="900" fill="rgba(255,255,255,0.06)" text-anchor="middle">4</text>
+  <!-- Thin line under number -->
+  <rect x="200" y="420" width="200" height="3" rx="1.5" fill="#0a0a0a"/>
   
-  <!-- Rank badge -->
-  <rect x="40" y="40" width="72" height="72" rx="16" fill="#94a3b8"/>
-  <text x="76" y="90" font-family="Arial,Helvetica,sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle">#4</text>
-  
-  <!-- Title area -->
-  <text x="130" y="72" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="600" fill="rgba(255,255,255,0.5)">Medical Korea Guide</text>
-  <text x="130" y="96" font-family="Arial,Helvetica,sans-serif" font-size="14" fill="rgba(255,255,255,0.3)">Recommended Clinic</text>
-  
-  <!-- Divider -->
-  <rect x="40" y="140" width="400" height="1.5" fill="rgba(255,255,255,0.1)"/>
-  
-  <!-- Info section -->
-  <text x="40" y="185" font-family="Arial,Helvetica,sans-serif" font-size="16" fill="#6366f1">Verified by Real Reviews</text>
-  
-  <!-- Platform badges -->
-  <rect x="40" y="220" width="90" height="28" rx="14" fill="rgba(255,255,255,0.1)"/>
-  <text x="85" y="239" font-family="Arial,Helvetica,sans-serif" font-size="11" font-weight="600" fill="rgba(255,255,255,0.7)" text-anchor="middle">Naver</text>
-  
-  <rect x="140" y="220" width="90" height="28" rx="14" fill="rgba(255,255,255,0.1)"/>
-  <text x="185" y="239" font-family="Arial,Helvetica,sans-serif" font-size="11" font-weight="600" fill="rgba(255,255,255,0.7)" text-anchor="middle">Kakao</text>
-  
-  <rect x="240" y="220" width="90" height="28" rx="14" fill="rgba(255,255,255,0.1)"/>
-  <text x="285" y="239" font-family="Arial,Helvetica,sans-serif" font-size="11" font-weight="600" fill="rgba(255,255,255,0.7)" text-anchor="middle">Google</text>
-  
-  <rect x="340" y="220" width="70" height="28" rx="14" fill="rgba(255,255,255,0.1)"/>
-  <text x="375" y="239" font-family="Arial,Helvetica,sans-serif" font-size="11" font-weight="600" fill="rgba(255,255,255,0.7)" text-anchor="middle">HIRA</text>
-  
-  <!-- Bottom bar -->
-  <rect x="40" y="340" width="720" height="1" fill="rgba(255,255,255,0.08)"/>
-  <text x="40" y="370" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="rgba(255,255,255,0.3)">medicalguide.co.kr</text>
-  <text x="760" y="370" font-family="Arial,Helvetica,sans-serif" font-size="12" fill="rgba(255,255,255,0.3)" text-anchor="end">Data-driven clinic comparison</text>
+  <!-- Site name -->
+  <text x="300" y="480" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="500" fill="#9ca3af" text-anchor="middle" letter-spacing="0.08em">MEDICAL KOREA GUIDE</text>
 </svg>
