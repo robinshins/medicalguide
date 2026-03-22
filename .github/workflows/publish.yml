@@ -2,31 +2,31 @@ name: Publish Articles
 
 on:
   schedule:
-    # 24 crons per day (~30min intervals, staggered, KST = UTC+9)
-    - cron: '31 15 * * *'   # KST 00:31
-    - cron: '19 16 * * *'   # KST 01:19
-    - cron: '47 16 * * *'   # KST 01:47
-    - cron: '8 17 * * *'    # KST 02:08
-    - cron: '53 17 * * *'   # KST 02:53
-    - cron: '22 18 * * *'   # KST 03:22
-    - cron: '41 19 * * *'   # KST 04:41
-    - cron: '14 20 * * *'   # KST 05:14
-    - cron: '36 21 * * *'   # KST 06:36
-    - cron: '5 22 * * *'    # KST 07:05
-    - cron: '48 22 * * *'   # KST 07:48
-    - cron: '27 23 * * *'   # KST 08:27
-    - cron: '11 0 * * *'    # KST 09:11
-    - cron: '42 0 * * *'    # KST 09:42
-    - cron: '18 1 * * *'    # KST 10:18
-    - cron: '55 1 * * *'    # KST 10:55
-    - cron: '33 2 * * *'    # KST 11:33
-    - cron: '7 3 * * *'     # KST 12:07
-    - cron: '44 3 * * *'    # KST 12:44
-    - cron: '21 4 * * *'    # KST 13:21
-    - cron: '52 5 * * *'    # KST 14:52
-    - cron: '16 7 * * *'    # KST 16:16
-    - cron: '39 9 * * *'    # KST 18:39
-    - cron: '3 12 * * *'    # KST 21:03
+    # 24 crons per day (every 30min from UTC 00:00 to 11:30 = KST 09:00~20:30)
+    - cron: '0 0 * * *'    # KST 09:00
+    - cron: '30 0 * * *'   # KST 09:30
+    - cron: '0 1 * * *'    # KST 10:00
+    - cron: '30 1 * * *'   # KST 10:30
+    - cron: '0 2 * * *'    # KST 11:00
+    - cron: '30 2 * * *'   # KST 11:30
+    - cron: '0 3 * * *'    # KST 12:00
+    - cron: '30 3 * * *'   # KST 12:30
+    - cron: '0 4 * * *'    # KST 13:00
+    - cron: '30 4 * * *'   # KST 13:30
+    - cron: '0 5 * * *'    # KST 14:00
+    - cron: '30 5 * * *'   # KST 14:30
+    - cron: '0 6 * * *'    # KST 15:00
+    - cron: '30 6 * * *'   # KST 15:30
+    - cron: '0 7 * * *'    # KST 16:00
+    - cron: '30 7 * * *'   # KST 16:30
+    - cron: '0 8 * * *'    # KST 17:00
+    - cron: '30 8 * * *'   # KST 17:30
+    - cron: '0 9 * * *'    # KST 18:00
+    - cron: '30 9 * * *'   # KST 18:30
+    - cron: '0 10 * * *'   # KST 19:00
+    - cron: '30 10 * * *'  # KST 19:30
+    - cron: '0 11 * * *'   # KST 20:00
+    - cron: '30 11 * * *'  # KST 20:30
   workflow_dispatch: # Manual trigger
 
 jobs:
@@ -35,6 +35,12 @@ jobs:
     timeout-minutes: 15
 
     steps:
+      - name: Random delay (0-10 min)
+        run: |
+          DELAY=$((RANDOM % 600))
+          echo "Waiting ${DELAY}s before starting..."
+          sleep $DELAY
+
       - name: Checkout
         uses: actions/checkout@v4
 
