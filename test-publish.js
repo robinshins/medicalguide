@@ -356,6 +356,7 @@ f) 실용 팁${isSpecialty ? `\ng) ${keywordData.specialty} 특화 정보` : ''}
 
 ## 문체 규칙
 - 이모지 절대 금지
+- 리뷰 인용 시 날짜를 절대 변경하지 마세요. 데이터에 "2026년 3월 21일"로 되어있으면 반드시 그대로 작성. 2024년, 2025년으로 바꾸지 말 것. 날짜가 없는 리뷰는 2026년으로 표기
 - 구체적 숫자 필수 ("많은 리뷰" X → "리뷰 847건" O)
 - 출처 명시
 - 자연스러운 구어체 섞기
@@ -390,7 +391,7 @@ async function publishOneArticle(keywordData) {
 
   // Launch ONE browser for all scraping
   const browser = await puppeteer.launch({
-    executablePath: process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
   });
@@ -596,34 +597,23 @@ JSON only: {"title":"translated","metaDescription":"translated","content":"trans
   }
 }
 
-// --- Main: Auto-fetch next pending keyword from Firestore ---
+// --- Main ---
 async function main() {
-  console.log('[Action] Fetching next pending keyword from Firestore...');
+  const kw = {
+    id: 'dental-seoul',
+    keyword: '서울 치과',
+    region: '서울',
+    regionSlug: 'seoul',
+    specialty: '',
+    specialtySlug: 'general',
+    category: 'dental',
+    status: 'pending',
+    publishedAt: null,
+    order: 11,
+  };
+
+  console.log('Publishing 1 article (KO + 12 languages)...\n');
   const totalStart = Date.now();
-
-  // Get next pending keyword ordered by 'order' field
-  const snap = await db.collection('keywords')
-    .where('status', '==', 'pending')
-    .orderBy('order', 'asc')
-    .limit(1)
-    .get();
-
-  if (snap.empty) {
-    console.log('[Action] No pending keywords. All done!');
-    process.exit(0);
-  }
-
-  const kw = snap.docs[0].data();
-  console.log(`[Action] Next: "${kw.keyword}" (order: ${kw.order}, category: ${kw.category})`);
-
-  // Random delay 0~10 minutes to avoid mechanical publish pattern
-  const randomDelay = Math.floor(Math.random() * 10 * 60 * 1000);
-  console.log(`[Action] Random delay: ${(randomDelay / 1000 / 60).toFixed(1)} minutes`);
-  await delay(randomDelay);
-  console.log('[Action] Starting publish...\n');
-
-  // Mark as in_progress
-  await db.collection('keywords').doc(kw.id).update({ status: 'in_progress' });
 
   try {
     const result = await publishOneArticle(kw);
@@ -632,18 +622,14 @@ async function main() {
       console.log(`\n${'='.repeat(60)}`);
       console.log(`SUCCESS`);
       console.log(`Title: ${result.title}`);
-      console.log(`URL: /ko/${kw.category}/${result.slug}`);
+      console.log(`URL: /ko/dental/${result.slug}`);
       console.log(`Total time: ${totalTime}s`);
       console.log(`${'='.repeat(60)}`);
     } else {
       console.log(`\nFailed: no hospitals found (${totalTime}s)`);
-      // Mark as failed so we skip it next time
-      await db.collection('keywords').doc(kw.id).update({ status: 'failed' });
     }
   } catch (e) {
     console.error('\nError:', e.message);
-    await db.collection('keywords').doc(kw.id).update({ status: 'failed' });
-    process.exit(1);
   }
 
   process.exit(0);
