@@ -1,0 +1,65 @@
+name: Publish Articles
+
+on:
+  schedule:
+    # 12 crons per day, staggered times (KST = UTC+9)
+    - cron: '31 16 * * *'   # KST 01:31
+    - cron: '19 17 * * *'   # KST 02:19
+    - cron: '47 18 * * *'   # KST 03:47
+    - cron: '8 20 * * *'    # KST 05:08
+    - cron: '53 21 * * *'   # KST 06:53
+    - cron: '22 23 * * *'   # KST 08:22
+    - cron: '41 0 * * *'    # KST 09:41
+    - cron: '14 2 * * *'    # KST 11:14
+    - cron: '36 3 * * *'    # KST 12:36
+    - cron: '5 5 * * *'     # KST 14:05
+    - cron: '48 6 * * *'    # KST 15:48
+    - cron: '27 8 * * *'    # KST 17:27
+  workflow_dispatch: # Manual trigger
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      - name: Create .env.local
+        run: |
+          cat > .env.local << 'EOF'
+          ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+          FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }}
+          FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }}
+          EOF
+
+      - name: Create Firebase service account
+        run: |
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > medicalkorea-2205a-firebase-adminsdk-fbsvc-70fd6e21f4.json
+
+      - name: Publish next article
+        run: node publish-action.js
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
+          FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
+          CHROME_PATH: /usr/bin/google-chrome-stable
