@@ -354,6 +354,31 @@ export default async function ArticlePage({ params }: PageProps) {
           </div>
         </div>
 
+        {/* Pricing guide link */}
+        <Link
+          href={`/${l}/${category}/pricing`}
+          className="mt-8 flex items-center justify-between bg-gray-950 text-white rounded-2xl p-6 hover:bg-gray-900 transition-colors group"
+        >
+          <div>
+            <p className="text-xs text-gray-400 mb-1">
+              {l === 'ko' ? '참고 가이드' : 'Reference Guide'}
+            </p>
+            <p className="font-bold text-lg">
+              {l === 'ko'
+                ? `한국 ${category === 'dental' ? '치과' : '피부과'} 시술 평균 가격 가이드`
+                : `Korea ${category === 'dental' ? 'Dental' : 'Dermatology'} Treatment Price Guide`}
+            </p>
+            <p className="text-sm text-gray-400 mt-1">
+              {l === 'ko'
+                ? '건강보험심사평가원 공식 데이터 기반 시술별 평균 가격 비교'
+                : 'Compare average prices by treatment based on official HIRA data'}
+            </p>
+          </div>
+          <svg className="w-6 h-6 text-gray-400 group-hover:translate-x-1 transition-transform shrink-0 ml-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </Link>
+
         {/* Comments */}
         <Comments articleId={article.id} lang={l} />
 
