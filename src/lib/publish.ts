@@ -1,8 +1,13 @@
 import { db } from './firebase';
-import type { KeywordEntry, Article } from './types';
+import type { KeywordEntry } from './types';
 
 const KEYWORDS_COLLECTION = 'keywords';
-const ARTICLES_COLLECTION = 'articles';
+const DENTAL_COLLECTION = 'articles';
+const DERMA_COLLECTION = 'articles_derma';
+
+function getArticlesCollection(category: string): string {
+  return category === 'dermatology' ? DERMA_COLLECTION : DENTAL_COLLECTION;
+}
 
 // --- Initialize keyword queue in Firestore ---
 export async function initializeKeywordQueue(): Promise<number> {
@@ -97,7 +102,7 @@ export async function publishArticle(): Promise<{ success: boolean; keyword?: st
       // Save all articles to Firestore
       const batch = db.batch();
       for (const article of articles) {
-        const ref = db.collection(ARTICLES_COLLECTION).doc(article.id);
+        const ref = db.collection(getArticlesCollection(keyword.category)).doc(article.id);
         // Don't store full hospitals array in every article (save space)
         const articleData = {
           ...article,
@@ -150,39 +155,4 @@ export async function publishArticle(): Promise<{ success: boolean; keyword?: st
   }
 }
 
-// --- Get published articles (no composite index needed) ---
-export async function getArticles(lang: string, category?: string, limit = 20): Promise<Article[]> {
-  let query: FirebaseFirestore.Query = db.collection(ARTICLES_COLLECTION)
-    .where('lang', '==', lang);
-
-  if (category) {
-    query = query.where('category', '==', category);
-  }
-
-  const snapshot = await query.limit(limit * 2).get();
-  const articles = snapshot.docs.map(doc => doc.data() as Article);
-
-  // Sort in JS to avoid needing composite index
-  articles.sort((a, b) => (b.publishedAt || '').localeCompare(a.publishedAt || ''));
-  return articles.slice(0, limit);
-}
-
-// --- Get single article ---
-export async function getArticle(lang: string, category: string, slug: string): Promise<Article | null> {
-  const id = `${category}-${slug}-${lang}`;
-  const doc = await db.collection(ARTICLES_COLLECTION).doc(id).get();
-  if (!doc.exists) return null;
-  return doc.data() as Article;
-}
-
-// --- Get all articles for sitemap ---
-export async function getAllArticleSlugs(): Promise<{ lang: string; category: string; slug: string }[]> {
-  const snapshot = await db.collection(ARTICLES_COLLECTION)
-    .select('lang', 'category', 'slug')
-    .get();
-
-  return snapshot.docs.map(doc => {
-    const data = doc.data();
-    return { lang: data.lang, category: data.category, slug: data.slug };
-  });
-}
+// Note: getArticles, getArticle, getAllArticleSlugs are in articles.ts (handles both collections)
