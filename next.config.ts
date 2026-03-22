@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Rewrite /sitemap.xml to API route (avoids [lang] catching it)
+  async rewrites() {
+    return {
+      beforeFiles: [
+        { source: '/sitemap.xml', destination: '/api/sitemap' },
+      ],
+    };
+  },
   // Allow Naver image domains
   images: {
     remotePatterns: [
