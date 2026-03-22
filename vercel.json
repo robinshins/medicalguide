@@ -1,16 +1,6 @@
 {
+  "framework": "nextjs",
   "crons": [
-    { "path": "/api/cron", "schedule": "31 1 * * *" },
-    { "path": "/api/cron", "schedule": "19 2 * * *" },
-    { "path": "/api/cron", "schedule": "47 3 * * *" },
-    { "path": "/api/cron", "schedule": "8 5 * * *" },
-    { "path": "/api/cron", "schedule": "53 6 * * *" },
-    { "path": "/api/cron", "schedule": "22 8 * * *" },
-    { "path": "/api/cron", "schedule": "41 9 * * *" },
-    { "path": "/api/cron", "schedule": "14 11 * * *" },
-    { "path": "/api/cron", "schedule": "36 12 * * *" },
-    { "path": "/api/cron", "schedule": "5 14 * * *" },
-    { "path": "/api/cron", "schedule": "48 15 * * *" },
-    { "path": "/api/cron", "schedule": "27 17 * * *" }
+    { "path": "/api/indexnow", "schedule": "0 6 * * *" }
   ]
 }
