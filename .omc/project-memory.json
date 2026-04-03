@@ -1,0 +1,127 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1775209221892,
+  "projectRoot": "/Users/singyuseob/medicalkoreaguide",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "next",
+        "version": "16.2.0",
+        "category": "fullstack"
+      },
+      {
+        "name": "react",
+        "version": "19.2.4",
+        "category": "frontend"
+      },
+      {
+        "name": "react-dom",
+        "version": "19.2.4",
+        "category": "frontend"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": null,
+    "lintCommand": "npm run lint",
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "next dev --webpack",
+      "build": "next build",
+      "start": "next start",
+      "lint": "eslint"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "public",
+      "src"
+    ],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "public": {
+      "path": "public",
+      "purpose": "Public files",
+      "fileCount": 13,
+      "lastAccessed": 1775209221853,
+      "keyFiles": [
+        "AGENTS.md",
+        "c3452bc6ba68afc0a9746c8a940551a6.txt",
+        "df4cc1b543e52b6b71f0ef8f18fe4e80.txt",
+        "file.svg",
+        "globe.svg"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 2,
+      "lastAccessed": 1775209221854,
+      "keyFiles": [
+        "AGENTS.md"
+      ]
+    },
+    "src/app": {
+      "path": "src/app",
+      "purpose": "Application code",
+      "fileCount": 7,
+      "lastAccessed": 1775209221878,
+      "keyFiles": [
+        "AGENTS.md",
+        "apple-icon.png",
+        "favicon.ico"
+      ]
+    },
+    "src/lib": {
+      "path": "src/lib",
+      "purpose": "Library code",
+      "fileCount": 12,
+      "lastAccessed": 1775209221879,
+      "keyFiles": [
+        "AGENTS.md",
+        "articles.ts",
+        "firebase.ts"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "src/app/api/sitemap/route.ts",
+      "accessCount": 2,
+      "lastAccessed": 1775209260207,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

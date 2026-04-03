@@ -4,7 +4,12 @@ import { getAllArticleSlugs } from '@/lib/articles';
 export const revalidate = 3600;
 
 export async function GET() {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.medicalguide.co.kr';
+  let baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.medicalguide.co.kr').trim();
+  if (!/^https?:\/\//.test(baseUrl)) {
+    baseUrl = `https://${baseUrl}`;
+  }
+  // Remove trailing slash
+  baseUrl = baseUrl.replace(/\/+$/, '');
   const now = new Date().toISOString();
 
   const urls: string[] = [];

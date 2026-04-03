@@ -1,0 +1,7 @@
+{
+  "tool_name": "Read",
+  "tool_input_preview": "{\"file_path\":\"/Users/singyuseob/medicalkoreaguide/src/app/sitemap.ts\"}",
+  "error": "File does not exist. Note: your current working directory is /Users/singyuseob/medicalkoreaguide.",
+  "timestamp": "2026-04-03T09:40:36.857Z",
+  "retry_count": 1
+}
