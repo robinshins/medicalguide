@@ -9,22 +9,19 @@ function getCollection(category?: string): string {
 }
 
 // --- Get published articles ---
-export async function getArticles(lang: string, category?: string, limit = 20): Promise<Article[]> {
+export async function getArticles(lang: string, category?: string, limit?: number): Promise<Article[]> {
   if (category) {
-    // Single category - query the right collection
     const snapshot = await db.collection(getCollection(category))
       .where('lang', '==', lang)
-      .limit(limit * 2)
       .get();
     const articles = snapshot.docs.map(doc => doc.data() as Article);
     articles.sort((a, b) => (b.publishedAt || '').localeCompare(a.publishedAt || ''));
-    return articles.slice(0, limit);
+    return limit ? articles.slice(0, limit) : articles;
   }
 
-  // No category filter - query both collections
   const [dentalSnap, dermaSnap] = await Promise.all([
-    db.collection(DENTAL_COLLECTION).where('lang', '==', lang).limit(limit * 2).get(),
-    db.collection(DERMA_COLLECTION).where('lang', '==', lang).limit(limit * 2).get(),
+    db.collection(DENTAL_COLLECTION).where('lang', '==', lang).get(),
+    db.collection(DERMA_COLLECTION).where('lang', '==', lang).get(),
   ]);
 
   const articles = [
@@ -32,7 +29,7 @@ export async function getArticles(lang: string, category?: string, limit = 20): 
     ...dermaSnap.docs.map(doc => doc.data() as Article),
   ];
   articles.sort((a, b) => (b.publishedAt || '').localeCompare(a.publishedAt || ''));
-  return articles.slice(0, limit);
+  return limit ? articles.slice(0, limit) : articles;
 }
 
 // --- Get single article ---

@@ -117,9 +117,21 @@
   },
   "hotPaths": [
     {
+      "path": "src/app/[lang]/[category]/page.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1775494856147,
+      "type": "file"
+    },
+    {
       "path": "src/app/[lang]/layout.tsx",
       "accessCount": 2,
       "lastAccessed": 1775491332696,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/articles.ts",
+      "accessCount": 2,
+      "lastAccessed": 1775494822542,
       "type": "file"
     },
     {
