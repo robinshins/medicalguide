@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1775209221892,
+  "lastScanned": 1775491244353,
   "projectRoot": "/Users/singyuseob/medicalkoreaguide",
   "techStack": {
     "languages": [
@@ -74,7 +74,7 @@
       "path": "public",
       "purpose": "Public files",
       "fileCount": 13,
-      "lastAccessed": 1775209221853,
+      "lastAccessed": 1775491244289,
       "keyFiles": [
         "AGENTS.md",
         "c3452bc6ba68afc0a9746c8a940551a6.txt",
@@ -87,7 +87,7 @@
       "path": "src",
       "purpose": "Source code",
       "fileCount": 2,
-      "lastAccessed": 1775209221854,
+      "lastAccessed": 1775491244312,
       "keyFiles": [
         "AGENTS.md"
       ]
@@ -96,7 +96,7 @@
       "path": "src/app",
       "purpose": "Application code",
       "fileCount": 7,
-      "lastAccessed": 1775209221878,
+      "lastAccessed": 1775491244334,
       "keyFiles": [
         "AGENTS.md",
         "apple-icon.png",
@@ -106,8 +106,8 @@
     "src/lib": {
       "path": "src/lib",
       "purpose": "Library code",
-      "fileCount": 12,
-      "lastAccessed": 1775209221879,
+      "fileCount": 13,
+      "lastAccessed": 1775491244334,
       "keyFiles": [
         "AGENTS.md",
         "articles.ts",
@@ -117,9 +117,15 @@
   },
   "hotPaths": [
     {
-      "path": "src/app/api/sitemap/route.ts",
+      "path": "src/app/[lang]/layout.tsx",
       "accessCount": 2,
-      "lastAccessed": 1775209260207,
+      "lastAccessed": 1775491332696,
+      "type": "file"
+    },
+    {
+      "path": "src/app/components/LangDropdown.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1775491316392,
       "type": "file"
     }
   ],

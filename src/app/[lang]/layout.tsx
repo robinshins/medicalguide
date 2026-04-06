@@ -72,24 +72,7 @@ export default async function LangLayout({
               <Link href={`/${l}/dermatology`} className="text-gray-500 hover:text-gray-900 font-medium transition-colors">
                 {t.dermatology}
               </Link>
-              <div className="relative group">
-                <button className="text-gray-400 hover:text-gray-600 text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 transition-colors">
-                  {config.nativeName}
-                </button>
-                <div className="absolute right-0 top-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-xl py-1.5 hidden group-hover:block z-50 min-w-[140px]">
-                  {SUPPORTED_LANGUAGES.map(sl => (
-                    <Link
-                      key={sl}
-                      href={`/${sl}`}
-                      className={`block px-3 py-1.5 text-xs transition-colors ${
-                        sl === l ? 'text-blue-600 bg-blue-50 font-medium' : 'text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      {LANG_CONFIG[sl].nativeName}
-                    </Link>
-                  ))}
-                </div>
-              </div>
+              <LangDropdown currentLang={l} />
             </nav>
           </div>
         </header>

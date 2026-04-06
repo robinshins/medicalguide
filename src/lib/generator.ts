@@ -52,6 +52,7 @@ ${reviews || '  - 리뷰 정보 없음'}
 export async function generateKoreanArticle(
   keyword: KeywordEntry,
   hospitals: HospitalInfo[],
+  promotedAdvantages?: string,
 ): Promise<{ title: string; metaDescription: string; content: string }> {
   const hospitalContext = buildHospitalContext(hospitals);
   const isSpecialty = keyword.specialty !== '일반';
@@ -83,7 +84,7 @@ export async function generateKoreanArticle(
 + AI 검색(ChatGPT, Perplexity) 질문 대응
 
 ## 실제 병원 데이터
-${hospitalContext}${dentalPriceContext}
+${hospitalContext}${dentalPriceContext}${promotedAdvantages ? `\n\n${promotedAdvantages}` : ''}
 
 ## 글 구조 (HTML, 반드시 이 순서)
 
@@ -211,9 +212,10 @@ Respond ONLY in JSON:
 export async function generateAllLanguageArticles(
   keyword: KeywordEntry,
   hospitals: HospitalInfo[],
+  promotedAdvantages?: string,
 ): Promise<Article[]> {
   console.log(`[Generator] Creating Korean article for: ${keyword.keyword}`);
-  const koreanArticle = await generateKoreanArticle(keyword, hospitals);
+  const koreanArticle = await generateKoreanArticle(keyword, hospitals, promotedAdvantages);
   console.log(`[Generator] Korean article created: ${koreanArticle.title}`);
 
   const slug = keyword.specialtySlug === 'general'

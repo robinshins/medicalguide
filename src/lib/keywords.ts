@@ -106,7 +106,7 @@ const SLUG_MAP: Record<string, string> = {
   '광교동': 'gwanggyo', '영통동': 'yeongtong-dong',
   '정자동': 'jeongja', '서현동': 'seohyeon', '야탑동': 'yatap',
   '수내동': 'sunae', '판교동': 'pangyo', '미금동': 'migeum',
-  '죽전동': 'jukjeon', '수지동': 'suji-dong', '동백동': 'dongbaek',
+  '죽전동': 'jukjeon', '수지동': 'suji-dong', '동백동': 'dongbaek', '마북동': 'mabuk', '대연동': 'daeyeon',
   '수원동': 'suwon-dong',
   // Subway stations
   '강남역': 'gangnam-station', '신논현역': 'sinnonhyeon-station',

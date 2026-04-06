@@ -95,9 +95,21 @@ export async function publishArticle(): Promise<{ success: boolean; keyword?: st
         hospitals.push(...fallbackHospitals);
       }
 
+      // Check for promoted hospitals
+      const { getPromotedHospital, applyPromotedHospital } = await import('./promoted');
+      const promoted = getPromotedHospital(keyword);
+      let promotedAdvantages: string | undefined;
+      if (promoted) {
+        const result = applyPromotedHospital(hospitals, promoted);
+        hospitals.length = 0;
+        hospitals.push(...result.hospitals);
+        promotedAdvantages = result.advantages;
+        console.log(`[Publish] Promoted hospital applied: ${promoted.hospital.name}`);
+      }
+
       // Generate articles in all languages (dynamic import to avoid loading anthropic SDK on page renders)
       const { generateAllLanguageArticles } = await import('./generator');
-      const articles = await generateAllLanguageArticles(keyword, hospitals);
+      const articles = await generateAllLanguageArticles(keyword, hospitals, promotedAdvantages);
 
       // Save all articles to Firestore
       const batch = db.batch();

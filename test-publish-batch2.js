@@ -782,21 +782,18 @@ JSON only: {"title":"translated","metaDescription":"translated","content":"trans
 // --- Main ---
 async function main() {
   const keywords = [
-    // 용인시
-    { id: 'dental-yongin', keyword: '용인 치과', region: '용인시', regionSlug: 'yongin', specialty: '', specialtySlug: 'general', category: 'dental', status: 'pending', publishedAt: null, order: 1 },
-    { id: 'dental-yongin-implant', keyword: '용인 임플란트', region: '용인시', regionSlug: 'yongin', specialty: '임플란트', specialtySlug: 'implant', category: 'dental', status: 'pending', publishedAt: null, order: 2 },
-    { id: 'dental-yongin-full-implant', keyword: '용인 전체임플란트', region: '용인시', regionSlug: 'yongin', specialty: '전체임플란트', specialtySlug: 'full-implant', category: 'dental', status: 'pending', publishedAt: null, order: 3 },
-    { id: 'dental-yongin-orthodontics', keyword: '용인 치아교정', region: '용인시', regionSlug: 'yongin', specialty: '치아교정', specialtySlug: 'orthodontics', category: 'dental', status: 'pending', publishedAt: null, order: 4 },
-    // 기흥구
-    { id: 'dental-giheung', keyword: '기흥구 치과', region: '기흥구', regionSlug: 'giheung', specialty: '', specialtySlug: 'general', category: 'dental', status: 'pending', publishedAt: null, order: 5 },
-    { id: 'dental-giheung-implant', keyword: '기흥구 임플란트', region: '기흥구', regionSlug: 'giheung', specialty: '임플란트', specialtySlug: 'implant', category: 'dental', status: 'pending', publishedAt: null, order: 6 },
-    { id: 'dental-giheung-full-implant', keyword: '기흥구 전체임플란트', region: '기흥구', regionSlug: 'giheung', specialty: '전체임플란트', specialtySlug: 'full-implant', category: 'dental', status: 'pending', publishedAt: null, order: 7 },
-    { id: 'dental-giheung-orthodontics', keyword: '기흥구 치아교정', region: '기흥구', regionSlug: 'giheung', specialty: '치아교정', specialtySlug: 'orthodontics', category: 'dental', status: 'pending', publishedAt: null, order: 8 },
-    // 마북동
-    { id: 'dental-mabuk', keyword: '마북동 치과', region: '마북동', regionSlug: 'mabuk', specialty: '', specialtySlug: 'general', category: 'dental', status: 'pending', publishedAt: null, order: 9 },
-    { id: 'dental-mabuk-implant', keyword: '마북동 임플란트', region: '마북동', regionSlug: 'mabuk', specialty: '임플란트', specialtySlug: 'implant', category: 'dental', status: 'pending', publishedAt: null, order: 10 },
-    { id: 'dental-mabuk-full-implant', keyword: '마북동 전체임플란트', region: '마북동', regionSlug: 'mabuk', specialty: '전체임플란트', specialtySlug: 'full-implant', category: 'dental', status: 'pending', publishedAt: null, order: 11 },
-    { id: 'dental-mabuk-orthodontics', keyword: '마북동 치아교정', region: '마북동', regionSlug: 'mabuk', specialty: '치아교정', specialtySlug: 'orthodontics', category: 'dental', status: 'pending', publishedAt: null, order: 12 },
+    // 부산
+    { id: 'dental-busan', keyword: '부산 치과', region: '부산', regionSlug: 'busan', specialty: '', specialtySlug: 'general', category: 'dental', status: 'pending', publishedAt: null, order: 1 },
+    { id: 'dental-busan-implant', keyword: '부산 임플란트', region: '부산', regionSlug: 'busan', specialty: '임플란트', specialtySlug: 'implant', category: 'dental', status: 'pending', publishedAt: null, order: 2 },
+    { id: 'dental-busan-full-implant', keyword: '부산 전체임플란트', region: '부산', regionSlug: 'busan', specialty: '전체임플란트', specialtySlug: 'full-implant', category: 'dental', status: 'pending', publishedAt: null, order: 3 },
+    // 남구
+    { id: 'dental-nam-gu', keyword: '부산남구 치과', region: '남구', regionSlug: 'nam-gu', specialty: '', specialtySlug: 'general', category: 'dental', status: 'pending', publishedAt: null, order: 4 },
+    { id: 'dental-nam-gu-implant', keyword: '부산남구 임플란트', region: '남구', regionSlug: 'nam-gu', specialty: '임플란트', specialtySlug: 'implant', category: 'dental', status: 'pending', publishedAt: null, order: 5 },
+    { id: 'dental-nam-gu-full-implant', keyword: '부산남구 전체임플란트', region: '남구', regionSlug: 'nam-gu', specialty: '전체임플란트', specialtySlug: 'full-implant', category: 'dental', status: 'pending', publishedAt: null, order: 6 },
+    // 대연동
+    { id: 'dental-daeyeon', keyword: '대연동 치과', region: '대연동', regionSlug: 'daeyeon', specialty: '', specialtySlug: 'general', category: 'dental', status: 'pending', publishedAt: null, order: 7 },
+    { id: 'dental-daeyeon-implant', keyword: '대연동 임플란트', region: '대연동', regionSlug: 'daeyeon', specialty: '임플란트', specialtySlug: 'implant', category: 'dental', status: 'pending', publishedAt: null, order: 8 },
+    { id: 'dental-daeyeon-full-implant', keyword: '대연동 전체임플란트', region: '대연동', regionSlug: 'daeyeon', specialty: '전체임플란트', specialtySlug: 'full-implant', category: 'dental', status: 'pending', publishedAt: null, order: 9 },
   ];
 
   console.log(`Publishing ${keywords.length} keywords (KO + 12 languages each)...\n`);
