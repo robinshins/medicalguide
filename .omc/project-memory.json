@@ -123,15 +123,15 @@
       "type": "file"
     },
     {
-      "path": "src/app/[lang]/layout.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1775491332696,
+      "path": "src/lib/articles.ts",
+      "accessCount": 3,
+      "lastAccessed": 1775561117967,
       "type": "file"
     },
     {
-      "path": "src/lib/articles.ts",
+      "path": "src/app/[lang]/layout.tsx",
       "accessCount": 2,
-      "lastAccessed": 1775494822542,
+      "lastAccessed": 1775491332696,
       "type": "file"
     },
     {

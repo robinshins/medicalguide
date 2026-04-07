@@ -14,7 +14,9 @@ export async function getArticles(lang: string, category?: string, limit?: numbe
     const snapshot = await db.collection(getCollection(category))
       .where('lang', '==', lang)
       .get();
-    const articles = snapshot.docs.map(doc => doc.data() as Article);
+    const articles = snapshot.docs
+      .map(doc => doc.data() as Article)
+      .filter(a => a.category === category);
     articles.sort((a, b) => (b.publishedAt || '').localeCompare(a.publishedAt || ''));
     return limit ? articles.slice(0, limit) : articles;
   }
