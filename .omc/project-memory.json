@@ -124,8 +124,8 @@
     },
     {
       "path": "src/lib/articles.ts",
-      "accessCount": 3,
-      "lastAccessed": 1775561117967,
+      "accessCount": 4,
+      "lastAccessed": 1775561265749,
       "type": "file"
     },
     {
@@ -139,6 +139,18 @@
       "accessCount": 1,
       "lastAccessed": 1775491316392,
       "type": "file"
+    },
+    {
+      "path": "src/app/api/sitemap/route.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775561185672,
+      "type": "file"
+    },
+    {
+      "path": "src/app",
+      "accessCount": 1,
+      "lastAccessed": 1775561255019,
+      "type": "directory"
     }
   ],
   "userDirectives": []

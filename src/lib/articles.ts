@@ -50,10 +50,12 @@ export async function getAllArticleSlugs(): Promise<{ lang: string; category: st
   ]);
 
   return [
-    ...dentalSnap.docs.map(doc => {
-      const d = doc.data();
-      return { lang: d.lang, category: d.category, slug: d.slug };
-    }),
+    ...dentalSnap.docs
+      .map(doc => {
+        const d = doc.data();
+        return { lang: d.lang, category: d.category, slug: d.slug };
+      })
+      .filter(a => a.category === 'dental'),
     ...dermaSnap.docs.map(doc => {
       const d = doc.data();
       return { lang: d.lang, category: d.category, slug: d.slug };
