@@ -36,7 +36,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     twitter: { card: 'summary_large_image', title, description },
     alternates: {
       canonical: `${baseUrl}/${l}/dermatology/pricing`,
-      languages: Object.fromEntries(SUPPORTED_LANGUAGES.map(sl => [LANG_CONFIG[sl].htmlLang, `${baseUrl}/${sl}/dermatology/pricing`])),
+      languages: {
+        ...Object.fromEntries(SUPPORTED_LANGUAGES.map(sl => [LANG_CONFIG[sl].htmlLang, `${baseUrl}/${sl}/dermatology/pricing`])),
+        'x-default': `${baseUrl}/en/dermatology/pricing`,
+      },
     },
   };
 }

@@ -4,6 +4,8 @@ import { SUPPORTED_LANGUAGES, UI_TRANSLATIONS, LANG_CONFIG } from '@/lib/i18n';
 import type { SupportedLang } from '@/lib/types';
 import type { Metadata } from 'next';
 
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://medicalguide.co.kr';
+
 const PER_PAGE = 100;
 
 interface PageProps {
@@ -29,6 +31,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: `${categoryName} - ${t.siteName}`,
     description: `${categoryName} ${t.siteDescription}`,
+    alternates: {
+      canonical: `${BASE_URL}/${lang}/${category}`,
+      languages: {
+        ...Object.fromEntries(
+          SUPPORTED_LANGUAGES.map(sl => [LANG_CONFIG[sl].htmlLang, `${BASE_URL}/${sl}/${category}`])
+        ),
+        'x-default': `${BASE_URL}/en/${category}`,
+      },
+    },
   };
 }
 
@@ -53,8 +64,26 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
   const totalPages = Math.ceil(allArticles.length / PER_PAGE);
   const articles = allArticles.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
 
+  const collectionJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: categoryName,
+    description: `${categoryName} ${t.siteDescription}`,
+    url: `${BASE_URL}/${l}/${category}`,
+    inLanguage: l,
+    isPartOf: { '@type': 'WebSite', name: 'Medical Korea Guide', url: BASE_URL },
+    ...(allArticles.length > 0 ? {
+      hasPart: allArticles.slice(0, 20).map(a => ({
+        '@type': 'Article',
+        headline: a.title,
+        url: `${BASE_URL}/${l}/${category}/${a.slug}`,
+      })),
+    } : {}),
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }} />
       <nav className="text-sm text-gray-500 mb-6">
         <Link href={`/${l}`} className="hover:text-blue-700">{t.backToHome}</Link>
         <span className="mx-2">&rsaquo;</span>

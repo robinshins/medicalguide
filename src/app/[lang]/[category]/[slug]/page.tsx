@@ -48,9 +48,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     },
     alternates: {
       canonical: canonicalUrl,
-      languages: Object.fromEntries(
-        SUPPORTED_LANGUAGES.map(sl => [LANG_CONFIG[sl].htmlLang, `${baseUrl}/${sl}/${category}/${slug}`])
-      ),
+      languages: {
+        ...Object.fromEntries(
+          SUPPORTED_LANGUAGES.map(sl => [LANG_CONFIG[sl].htmlLang, `${baseUrl}/${sl}/${category}/${slug}`])
+        ),
+        'x-default': `${baseUrl}/en/${category}/${slug}`,
+      },
     },
     other: {
       'article:author': 'Medical Korea Guide',
@@ -109,13 +112,15 @@ function buildJsonLd(article: NonNullable<Awaited<ReturnType<typeof getArticle>>
     '@context': 'https://schema.org',
     '@type': 'ItemList',
     itemListOrder: 'https://schema.org/ItemListOrderAscending',
-    description: `${article.region} ${categoryName} ${hospitals.length}개 비교 정보`,
+    description: lang === 'ko'
+      ? `${article.region} ${categoryName} ${hospitals.length}개 비교 정보`
+      : `Comparison of ${hospitals.length} ${categoryName} clinics in ${article.region}`,
     numberOfItems: hospitals.length,
     itemListElement: hospitals.map((h: HospitalInfo, i: number) => ({
       '@type': 'ListItem',
       position: i + 1,
       name: h.name,
-      url: h.id ? `https://m.place.naver.com/place/${h.id}` : undefined,
+      ...(h.id ? { url: `https://m.place.naver.com/place/${h.id}` } : {}),
       image: `${baseUrl}/og/rank-${i + 1}.png`,
     })),
   });
@@ -127,18 +132,19 @@ function buildJsonLd(article: NonNullable<Awaited<ReturnType<typeof getArticle>>
     const city = addressParts[1] || '';
     const street = addressParts.slice(2).join(' ');
 
+    const hospitalUrl = h.id ? `https://m.place.naver.com/place/${h.id}` : (h.homepage || null);
     schemas.push({
       '@context': 'https://schema.org',
       '@type': category === 'dental' ? 'Dentist' : 'MedicalClinic',
       name: h.name,
-      url: h.id ? `https://m.place.naver.com/place/${h.id}` : (h.homepage || undefined),
-      telephone: h.phone || undefined,
+      ...(hospitalUrl ? { url: hospitalUrl } : {}),
+      ...(h.phone ? { telephone: h.phone } : {}),
       address: {
         '@type': 'PostalAddress',
         streetAddress: street,
         addressLocality: city,
         addressRegion: region,
-        addressCountry: '대한민국',
+        addressCountry: 'KR',
       },
       ...(h.kakaoRating || h.googleRating ? {
         aggregateRating: {

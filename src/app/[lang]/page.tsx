@@ -26,8 +26,32 @@ export default async function HomePage({
     // Firestore may not be initialized yet
   }
 
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://medicalguide.co.kr';
+  const jsonLdSchemas = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Organization',
+      name: 'Medical Korea Guide',
+      url: baseUrl,
+      logo: `${baseUrl}/icon-192.png`,
+      description: t.siteDescription,
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: t.siteName,
+      url: `${baseUrl}/${l}`,
+      inLanguage: l,
+      description: t.siteDescription,
+      publisher: { '@type': 'Organization', name: 'Medical Korea Guide' },
+    },
+  ];
+
   return (
     <div>
+      {jsonLdSchemas.map((schema, i) => (
+        <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+      ))}
       {/* Hero Section */}
       <section className="relative bg-gray-950 text-white overflow-hidden">
         {/* Decorative shapes */}

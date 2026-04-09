@@ -33,9 +33,12 @@ export async function generateMetadata({
       type: 'website',
     },
     alternates: {
-      languages: Object.fromEntries(
-        SUPPORTED_LANGUAGES.map(sl => [LANG_CONFIG[sl].htmlLang, `/${sl}`])
-      ),
+      languages: {
+        ...Object.fromEntries(
+          SUPPORTED_LANGUAGES.map(sl => [LANG_CONFIG[sl].htmlLang, `/${sl}`])
+        ),
+        'x-default': '/en',
+      },
     },
   };
 }
