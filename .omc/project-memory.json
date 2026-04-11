@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1775716396113,
+  "lastScanned": 1775886812100,
   "projectRoot": "/Users/singyuseob/medicalkoreaguide",
   "techStack": {
     "languages": [
@@ -74,7 +74,7 @@
       "path": "public",
       "purpose": "Public files",
       "fileCount": 13,
-      "lastAccessed": 1775716396001,
+      "lastAccessed": 1775886811996,
       "keyFiles": [
         "AGENTS.md",
         "c3452bc6ba68afc0a9746c8a940551a6.txt",
@@ -87,7 +87,7 @@
       "path": "src",
       "purpose": "Source code",
       "fileCount": 2,
-      "lastAccessed": 1775716396033,
+      "lastAccessed": 1775886812002,
       "keyFiles": [
         "AGENTS.md"
       ]
@@ -96,7 +96,7 @@
       "path": "src/app",
       "purpose": "Application code",
       "fileCount": 7,
-      "lastAccessed": 1775716396089,
+      "lastAccessed": 1775886812072,
       "keyFiles": [
         "AGENTS.md",
         "apple-icon.png",
@@ -107,7 +107,7 @@
       "path": "src/lib",
       "purpose": "Library code",
       "fileCount": 13,
-      "lastAccessed": 1775716396090,
+      "lastAccessed": 1775886812074,
       "keyFiles": [
         "AGENTS.md",
         "articles.ts",
@@ -117,117 +117,9 @@
   },
   "hotPaths": [
     {
-      "path": "src/app/[lang]/[category]/[slug]/page.tsx",
-      "accessCount": 9,
-      "lastAccessed": 1775717065035,
-      "type": "file"
-    },
-    {
-      "path": "src/app/[lang]/[category]/page.tsx",
-      "accessCount": 7,
-      "lastAccessed": 1775717066881,
-      "type": "file"
-    },
-    {
-      "path": "",
-      "accessCount": 4,
-      "lastAccessed": 1775716491420,
-      "type": "directory"
-    },
-    {
-      "path": "src/app/[lang]/page.tsx",
-      "accessCount": 4,
-      "lastAccessed": 1775716863553,
-      "type": "file"
-    },
-    {
-      "path": "src/app/[lang]/layout.tsx",
-      "accessCount": 4,
-      "lastAccessed": 1775717054198,
-      "type": "file"
-    },
-    {
-      "path": "src/app/[lang]/dental/pricing/page.tsx",
-      "accessCount": 4,
-      "lastAccessed": 1775717068781,
-      "type": "file"
-    },
-    {
-      "path": "src/app",
-      "accessCount": 3,
-      "lastAccessed": 1775716859742,
-      "type": "directory"
-    },
-    {
-      "path": "public/robots.txt",
-      "accessCount": 3,
-      "lastAccessed": 1775717022632,
-      "type": "file"
-    },
-    {
-      "path": "vercel.json",
-      "accessCount": 3,
-      "lastAccessed": 1775717041802,
-      "type": "file"
-    },
-    {
-      "path": "src/app/[lang]/dermatology/pricing/page.tsx",
-      "accessCount": 3,
-      "lastAccessed": 1775717083722,
-      "type": "file"
-    },
-    {
-      "path": "src/app/layout.tsx",
+      "path": "src/lib/publish.ts",
       "accessCount": 2,
-      "lastAccessed": 1775716884883,
-      "type": "file"
-    },
-    {
-      "path": "src/lib/i18n.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775716495218,
-      "type": "file"
-    },
-    {
-      "path": "src/app/page.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1775716506831,
-      "type": "file"
-    },
-    {
-      "path": "next.config.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775716856456,
-      "type": "file"
-    },
-    {
-      "path": "indexnow-submit.js",
-      "accessCount": 1,
-      "lastAccessed": 1775716856793,
-      "type": "file"
-    },
-    {
-      "path": "src/app/api/sitemap/route.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775716862890,
-      "type": "file"
-    },
-    {
-      "path": "public/c3452bc6ba68afc0a9746c8a940551a6.txt",
-      "accessCount": 1,
-      "lastAccessed": 1775716890181,
-      "type": "file"
-    },
-    {
-      "path": "src/app/api/indexnow/route.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775716895028,
-      "type": "file"
-    },
-    {
-      "path": "src/app/components/PricingPage.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1775716900207,
+      "lastAccessed": 1775886850673,
       "type": "file"
     }
   ],

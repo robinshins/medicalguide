@@ -37,16 +37,32 @@ export async function initializeKeywordQueue(): Promise<number> {
   return count;
 }
 
-// --- Get next pending keyword ---
+// --- Get next pending keyword (pending first, then retry failed) ---
 export async function getNextPendingKeyword(): Promise<KeywordEntry | null> {
-  const snapshot = await db.collection(KEYWORDS_COLLECTION)
+  // 1) pending 키워드 우선
+  const pendingSnapshot = await db.collection(KEYWORDS_COLLECTION)
     .where('status', '==', 'pending')
     .orderBy('order', 'asc')
     .limit(1)
     .get();
 
-  if (snapshot.empty) return null;
-  return snapshot.docs[0].data() as KeywordEntry;
+  if (!pendingSnapshot.empty) {
+    return pendingSnapshot.docs[0].data() as KeywordEntry;
+  }
+
+  // 2) pending 없으면 failed 키워드 재시도
+  const failedSnapshot = await db.collection(KEYWORDS_COLLECTION)
+    .where('status', '==', 'failed')
+    .orderBy('order', 'asc')
+    .limit(1)
+    .get();
+
+  if (!failedSnapshot.empty) {
+    console.log('[Publish] No pending keywords, retrying failed keyword...');
+    return failedSnapshot.docs[0].data() as KeywordEntry;
+  }
+
+  return null;
 }
 
 // --- Publish a single article ---
