@@ -2,9 +2,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { SUPPORTED_LANGUAGES, UI_TRANSLATIONS, LANG_CONFIG } from '@/lib/i18n';
 import type { SupportedLang } from '@/lib/types';
-import { getArticles } from '@/lib/articles';
+import { getArticleSummaries } from '@/lib/articles';
 
-export const revalidate = 1800;
+export const revalidate = 7200;
 
 export default async function HomePage({
   params,
@@ -15,12 +15,12 @@ export default async function HomePage({
   const l = (SUPPORTED_LANGUAGES.includes(lang as SupportedLang) ? lang : 'ko') as SupportedLang;
   const t = UI_TRANSLATIONS[l];
 
-  let dentalArticles: Awaited<ReturnType<typeof getArticles>> = [];
-  let dermaArticles: Awaited<ReturnType<typeof getArticles>> = [];
+  let dentalArticles: Awaited<ReturnType<typeof getArticleSummaries>> = [];
+  let dermaArticles: Awaited<ReturnType<typeof getArticleSummaries>> = [];
   try {
     [dentalArticles, dermaArticles] = await Promise.all([
-      getArticles(l, 'dental', 6),
-      getArticles(l, 'dermatology', 6),
+      getArticleSummaries(l, 'dental', 6),
+      getArticleSummaries(l, 'dermatology', 6),
     ]);
   } catch {
     // Firestore may not be initialized yet

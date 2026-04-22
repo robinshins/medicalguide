@@ -123,21 +123,27 @@
       "type": "file"
     },
     {
+      "path": "src/lib/articles.ts",
+      "accessCount": 14,
+      "lastAccessed": 1776871451030,
+      "type": "file"
+    },
+    {
       "path": "src/lib/keywords.ts",
       "accessCount": 12,
       "lastAccessed": 1776869732754,
       "type": "directory"
     },
     {
-      "path": "src/lib/articles.ts",
-      "accessCount": 8,
-      "lastAccessed": 1776870423807,
+      "path": "src/app/[lang]/[category]/page.tsx",
+      "accessCount": 10,
+      "lastAccessed": 1776871083992,
       "type": "file"
     },
     {
-      "path": "src/app/[lang]/[category]/page.tsx",
-      "accessCount": 6,
-      "lastAccessed": 1776870429445,
+      "path": "publish-action.js",
+      "accessCount": 8,
+      "lastAccessed": 1776871260208,
       "type": "file"
     },
     {
@@ -154,14 +160,32 @@
     },
     {
       "path": "src/lib/publish.ts",
-      "accessCount": 2,
-      "lastAccessed": 1776870424736,
+      "accessCount": 3,
+      "lastAccessed": 1776870628234,
       "type": "file"
     },
     {
       "path": "src/app/api/sitemap/route.ts",
       "accessCount": 2,
       "lastAccessed": 1776870452216,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/types.ts",
+      "accessCount": 2,
+      "lastAccessed": 1776870582923,
+      "type": "file"
+    },
+    {
+      "path": "src/app/[lang]/page.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1776870706882,
+      "type": "file"
+    },
+    {
+      "path": "CLAUDE.md",
+      "accessCount": 2,
+      "lastAccessed": 1776871333766,
       "type": "file"
     },
     {
@@ -201,24 +225,6 @@
       "type": "file"
     },
     {
-      "path": "src/lib/types.ts",
-      "accessCount": 1,
-      "lastAccessed": 1776870424200,
-      "type": "file"
-    },
-    {
-      "path": "src/app/[lang]/page.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1776870429090,
-      "type": "file"
-    },
-    {
-      "path": "publish-action.js",
-      "accessCount": 1,
-      "lastAccessed": 1776870440316,
-      "type": "file"
-    },
-    {
       "path": "src/app/api/publish/route.ts",
       "accessCount": 1,
       "lastAccessed": 1776870440451,
@@ -234,6 +240,12 @@
       "path": "src/app/api/indexnow/route.ts",
       "accessCount": 1,
       "lastAccessed": 1776870452639,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/articlesIndex.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776870604411,
       "type": "file"
     }
   ],

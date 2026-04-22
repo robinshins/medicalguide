@@ -62,6 +62,18 @@ export interface Article {
   specialty: string;
 }
 
+export interface ArticleSummary {
+  id: string;
+  slug: string;
+  category: 'dental' | 'dermatology';
+  lang: string;
+  title: string;
+  metaDescription: string;
+  publishedAt: string;
+  region: string;
+  specialty: string;
+}
+
 export type SupportedLang =
   | 'ko' | 'en' | 'zh-TW' | 'zh-CN' | 'ja'
   | 'vi' | 'th' | 'ru' | 'es' | 'es-MX'

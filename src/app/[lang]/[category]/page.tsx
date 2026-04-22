@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import { getArticles } from '@/lib/articles';
+import { getArticles, getArticleSummaries } from '@/lib/articles';
 import { SUPPORTED_LANGUAGES, UI_TRANSLATIONS, LANG_CONFIG } from '@/lib/i18n';
-import type { SupportedLang } from '@/lib/types';
+import type { SupportedLang, ArticleSummary } from '@/lib/types';
 import type { Metadata } from 'next';
 import SearchBox from '@/app/components/SearchBox';
 
@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export const revalidate = 1800; // 30 minutes
+export const revalidate = 7200; // 2 hours
 
 export default async function CategoryPage({ params, searchParams }: PageProps) {
   const { lang, category } = await params;
@@ -57,9 +57,24 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
   const query = (qParam || '').trim();
   const queryLower = query.toLowerCase();
 
-  let allArticles: Awaited<ReturnType<typeof getArticles>> = [];
+  // Index holds latest 500 items (5 pages at 100/page). Use it for the common
+  // case (browse page 1-5, no search). Fall back to full collection scan when
+  // the user searches or paginates past the index cap — expensive but rare.
+  const INDEX_PAGES = 5;
+  const needsFullCollection = !!query || currentPage > INDEX_PAGES;
+
+  let allArticles: ArticleSummary[] = [];
   try {
-    allArticles = await getArticles(lang, category);
+    if (needsFullCollection) {
+      const full = await getArticles(lang, category);
+      allArticles = full.map(a => ({
+        id: a.id, slug: a.slug, category: a.category, lang: a.lang,
+        title: a.title, metaDescription: a.metaDescription,
+        publishedAt: a.publishedAt, region: a.region, specialty: a.specialty,
+      }));
+    } else {
+      allArticles = await getArticleSummaries(lang, category);
+    }
   } catch {
     // Firestore may not have data yet
   }

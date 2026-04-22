@@ -46,10 +46,40 @@ Routes follow `[lang]/[category]/[slug]` pattern supporting 13 languages × 2 ca
 - **Firebase lazy init**: `firebase.ts` uses a Proxy so imports don't crash during build
 - **UI text**: Always use `UI_TRANSLATIONS[lang]` from `src/lib/i18n.ts` — never hardcode user-facing strings
 - **Article IDs**: Follow pattern `{category}-{slug}-{lang}` (e.g., `dental-gangnam-ko`)
-- **ISR**: Category pages revalidate at 1800s, articles at 3600s
+- **ISR**: Home/category pages revalidate at 7200s (2h), article detail at 3600s (1h)
 - **Scraper delays**: 2-3s between requests to avoid rate limiting on Naver/Kakao
 - **Firestore queries**: Avoid composite indexes — sort in JavaScript instead
 - **No emojis**: Neither in UI code nor in Claude-generated article content
+
+### Firestore collections (IMPORTANT — collection name is the source of truth for category)
+
+| Collection | Contents |
+|---|---|
+| `articles` | **dental** articles only |
+| `articles_derma` | **dermatology** articles only |
+| `articles-index` | pre-aggregated summaries, doc id `{category}-{lang}` (e.g. `dental-ko`), latest 500 items each |
+| `keywords` | publish queue (9,025 docs) |
+| `comments` | user comments |
+
+Mapping (keep in sync across all three sites):
+
+```
+category === 'dermatology' ? 'articles_derma' : 'articles'
+```
+
+- `src/lib/articles.ts::getCollection()`
+- `src/lib/publish.ts::getArticlesCollection()`
+- `publish-action.js::articlesCollectionFor()`
+
+**Never** trust a document's own `category` field to decide where it lives. The Firebase project is shared across multiple sites, and the `articles` collection contains foreign docs with `category='dermatology'` that belong to other sites — ignore them. Always route by collection.
+
+Dermatology publishing for **this** site has not started yet, so `articles_derma` is empty and dermatology category pages correctly show nothing. Once the dermatology pipeline runs, writes MUST go to `articles_derma`.
+
+### Index maintenance
+
+- `node rebuild-articles-index.js` — one-shot backfill of `articles-index/` docs from the two article collections. Run after `ArticleSummary` schema changes or to recover from drift.
+- Publish paths call `upsertArticleIndex()` automatically; manual rebuild is only for recovery.
+- Index caps at 500 items per `{category}-{lang}` (~250KB, safe under 1MB). Category pages fall back to a full collection scan for page 6+ or search queries.
 
 ### Environment Variables
 

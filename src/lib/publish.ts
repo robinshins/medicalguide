@@ -157,6 +157,15 @@ export async function publishArticle(): Promise<{ success: boolean; keyword?: st
 
       await batch.commit();
 
+      // Update pre-aggregated index for home/category pages.
+      // Failure here shouldn't fail the whole publish — log and continue.
+      try {
+        const { upsertArticleIndex } = await import('./articlesIndex');
+        await Promise.all(articles.map(a => upsertArticleIndex(a)));
+      } catch (indexError) {
+        console.error('[Publish] Index update failed (non-fatal):', indexError);
+      }
+
       console.log(`[Publish] Published ${articles.length} articles for "${keyword.keyword}"`);
       return {
         success: true,

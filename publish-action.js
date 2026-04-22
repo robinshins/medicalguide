@@ -16,6 +16,49 @@ const openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const delay = ms => new Promise(r => setTimeout(r, ms));
 const UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15';
 
+// Collection routing is authoritative — MUST match src/lib/articles.ts.
+// dental → 'articles', dermatology → 'articles_derma'.
+function articlesCollectionFor(category) {
+  return category === 'dermatology' ? 'articles_derma' : 'articles';
+}
+
+// --- Articles index (pre-aggregated summaries for home/category pages) ---
+const INDEX_COLLECTION = 'articles-index';
+const MAX_ITEMS_PER_INDEX = 500;
+
+function articleSummaryFromDoc(doc) {
+  return {
+    id: doc.id,
+    slug: doc.slug,
+    category: doc.category,
+    lang: doc.lang,
+    title: doc.title,
+    metaDescription: doc.metaDescription,
+    publishedAt: doc.publishedAt,
+    region: doc.region,
+    specialty: doc.specialty,
+  };
+}
+
+async function upsertArticleIndex(doc) {
+  const ref = db.collection(INDEX_COLLECTION).doc(`${doc.category}-${doc.lang}`);
+  const summary = articleSummaryFromDoc(doc);
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const existing = snap.exists ? ((snap.data() || {}).items || []) : [];
+    const filtered = existing.filter(s => s.id !== summary.id);
+    filtered.push(summary);
+    filtered.sort((a, b) => (b.publishedAt || '').localeCompare(a.publishedAt || ''));
+    const capped = filtered.slice(0, MAX_ITEMS_PER_INDEX);
+    tx.set(ref, {
+      category: doc.category,
+      lang: doc.lang,
+      items: capped,
+      updatedAt: new Date().toISOString(),
+    });
+  });
+}
+
 // --- GPT Matcher ---
 async function matchWithGPT(naverHospital, kakaoCandidates) {
   if (kakaoCandidates.length === 0) return { matchIndex: -1, confidence: 0, reason: 'No candidates' };
@@ -534,7 +577,8 @@ async function publishOneArticle(keywordData) {
       content: koArticle.content, hospitals: hospitalsSummary,
       publishedAt: now, region, specialty: specialty || '일반',
     };
-    await db.collection('articles').doc(koDoc.id).set(koDoc);
+    await db.collection(articlesCollectionFor(category)).doc(koDoc.id).set(koDoc);
+    try { await upsertArticleIndex(koDoc); } catch (e) { console.log('  Index update failed (ko):', e.message); }
     console.log(`  Saved: ${koDoc.id}`);
 
     // 6. Translate to 12 languages in parallel
@@ -566,7 +610,8 @@ JSON only: {"title":"translated","metaDescription":"translated","content":"trans
           if (!jsonMatch) throw new Error('Parse failed');
           const translated = JSON.parse(jsonMatch[0]);
           const doc = { ...koDoc, id: `${category}-${slug}-${lang}`, lang, title: translated.title, metaDescription: translated.metaDescription, content: translated.content };
-          await db.collection('articles').doc(doc.id).set(doc);
+          await db.collection(articlesCollectionFor(category)).doc(doc.id).set(doc);
+          try { await upsertArticleIndex(doc); } catch (e) { console.log(`  Index update failed (${lang}):`, e.message); }
           console.log(`  ✓ ${lang}`);
           return doc.id;
         } catch (e) {

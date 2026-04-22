@@ -1,5 +1,6 @@
 import { db } from './firebase';
-import type { Article } from './types';
+import type { Article, ArticleSummary } from './types';
+import { readArticleIndex, readArticleIndexesAllCategories } from './articlesIndex';
 
 const DENTAL_COLLECTION = 'articles';
 const DERMA_COLLECTION = 'articles_derma';
@@ -8,7 +9,37 @@ function getCollection(category?: string): string {
   return category === 'dermatology' ? DERMA_COLLECTION : DENTAL_COLLECTION;
 }
 
-// --- Get published articles ---
+// --- Get article summaries from pre-aggregated index (cheap: 1-2 reads) ---
+// Use for home/category lists. Falls back to collection scan if index missing.
+export async function getArticleSummaries(
+  lang: string,
+  category?: string,
+  limit?: number,
+): Promise<ArticleSummary[]> {
+  const items = category
+    ? await readArticleIndex(lang, category)
+    : await readArticleIndexesAllCategories(lang);
+
+  // Fallback: index not built yet → derive from full collection once.
+  if (items.length === 0) {
+    const articles = await getArticles(lang, category, limit);
+    return articles.map(a => ({
+      id: a.id,
+      slug: a.slug,
+      category: a.category,
+      lang: a.lang,
+      title: a.title,
+      metaDescription: a.metaDescription,
+      publishedAt: a.publishedAt,
+      region: a.region,
+      specialty: a.specialty,
+    }));
+  }
+
+  return limit ? items.slice(0, limit) : items;
+}
+
+// --- Get published articles (full documents; expensive) ---
 export async function getArticles(lang: string, category?: string, limit?: number): Promise<Article[]> {
   if (category) {
     const snapshot = await db.collection(getCollection(category))
@@ -26,9 +57,14 @@ export async function getArticles(lang: string, category?: string, limit?: numbe
     db.collection(DERMA_COLLECTION).where('lang', '==', lang).get(),
   ]);
 
+  // Drop cross-site contamination: trust collection over doc.category field.
   const articles = [
-    ...dentalSnap.docs.map(doc => doc.data() as Article),
-    ...dermaSnap.docs.map(doc => doc.data() as Article),
+    ...dentalSnap.docs
+      .map(doc => doc.data() as Article)
+      .filter(a => a.category !== 'dermatology'),
+    ...dermaSnap.docs
+      .map(doc => doc.data() as Article)
+      .filter(a => a.category !== 'dental'),
   ];
   articles.sort((a, b) => (b.publishedAt || '').localeCompare(a.publishedAt || ''));
   return limit ? articles.slice(0, limit) : articles;
@@ -65,22 +101,25 @@ export async function getArticle(lang: string, category: string, slug: string): 
 }
 
 // --- Get all articles for sitemap ---
+// Filters out cross-site contamination: the shared Firebase project may have
+// foreign docs whose `category` field disagrees with the collection they live
+// in. Collection name is the source of truth — we drop any doc whose own
+// category field contradicts the collection.
 export async function getAllArticleSlugs(): Promise<{ lang: string; category: string; slug: string }[]> {
   const [dentalSnap, dermaSnap] = await Promise.all([
     db.collection(DENTAL_COLLECTION).select('lang', 'category', 'slug').get(),
     db.collection(DERMA_COLLECTION).select('lang', 'category', 'slug').get(),
   ]);
 
-  return [
-    ...dentalSnap.docs
-      .map(doc => {
-        const d = doc.data();
-        return { lang: d.lang, category: d.category, slug: d.slug };
-      })
-      .filter(a => a.category === 'dental'),
-    ...dermaSnap.docs.map(doc => {
-      const d = doc.data();
-      return { lang: d.lang, category: d.category, slug: d.slug };
-    }),
-  ];
+  const dental = dentalSnap.docs
+    .map(doc => doc.data())
+    .filter(d => d.lang && d.slug && d.category !== 'dermatology')
+    .map(d => ({ lang: d.lang, category: 'dental', slug: d.slug }));
+
+  const derma = dermaSnap.docs
+    .map(doc => doc.data())
+    .filter(d => d.lang && d.slug && d.category !== 'dental')
+    .map(d => ({ lang: d.lang, category: 'dermatology', slug: d.slug }));
+
+  return [...dental, ...derma];
 }
