@@ -42,6 +42,15 @@ const SLUG_MAP: Record<string, string> = {
   '남원시': 'namwon', '정읍시': 'jeongeup', '목포시': 'mokpo',
   '순천시': 'suncheon', '여수시': 'yeosu', '광양시': 'gwangyang',
   '나주시': 'naju',
+  '경주시': 'gyeongju', '김천시': 'gimcheon', '칠곡군': 'chilgok',
+  '영천시': 'yeongcheon', '상주시': 'sangju', '울주군': 'ulju',
+  '양평군': 'yangpyeong', '공주시': 'gongju', '홍성군': 'hongseong',
+  '무안군': 'muan', '음성군': 'eumseong', '완주군': 'wanju',
+  '진천군': 'jincheon', '김제시': 'gimje', '속초시': 'sokcho',
+  '예산군': 'yesan', '동해시': 'donghae',
+  '광주시': 'gwangju-si',  // 경기 광주 — 광역시 '광주': 'gwangju'와 구분
+  '유성구': 'yuseong', '대덕구': 'daedeok',
+  '동구': 'dong-gu',  // 대구/대전/울산/광주/부산 5곳 공통 — dedup으로 하나만 발행
   // Busan districts
   '해운대구': 'haeundae', '부산진구': 'busanjin', '동래구': 'dongnae',
   '남구': 'nam-gu', '북구': 'buk-gu', '사상구': 'sasang', '사하구': 'saha',
@@ -108,6 +117,59 @@ const SLUG_MAP: Record<string, string> = {
   '수내동': 'sunae', '판교동': 'pangyo', '미금동': 'migeum',
   '죽전동': 'jukjeon', '수지동': 'suji-dong', '동백동': 'dongbaek', '마북동': 'mabuk', '대연동': 'daeyeon',
   '수원동': 'suwon-dong',
+  // Additional dongs/eups (from regions-data.json — population-ordered)
+  '장유동': 'jangyu', '부평동': 'bupyeong-dong', '주안동': 'juan', '다산동': 'dasan',
+  '안양동': 'anyang-dong', '연산동': 'yeonsan', '미사동': 'misa', '중동': 'jung-dong',
+  '상도동': 'sangdo', '온양동': 'onyang', '부성동': 'buseong', '물금읍': 'mulgeum',
+  '청라동': 'cheongna', '신월동': 'sinwol', '농소동': 'nongso', '봉담읍': 'bongdam-eup',
+  '효자동': 'hyoja', '구월동': 'guwol', '송산동': 'songsan', '만수동': 'mansu',
+  '비전동': 'bijeon', '옥정동': 'okjeong', '안심동': 'ansim', '용암동': 'yongam',
+  '상동': 'sang-dong', '배방읍': 'baebang', '진접읍': 'jinjeop', '신길동': 'singil',
+  '온천동': 'oncheon', '영종동': 'yeongjong', '간석동': 'ganseok', '행신동': 'haengsin',
+  '송천동': 'songcheon', '대명동': 'daemyeong', '정왕동': 'jeongwang', '광명동': 'gwangmyeong-dong',
+  '고산동': 'gosan', '향남읍': 'hyangnam', '신곡동': 'singok', '방화동': 'banghwa',
+  '명지동': 'myeongji', '좌동': 'jwa-dong', '화명동': 'hwamyeong', '별내동': 'byeollae',
+  '회천동': 'hoecheon', '우동': 'u-dong', '북부동': 'bukbu', '상현동': 'sanghyeon',
+  '노은동': 'noeun', '산곡동': 'sangok', '당진동': 'dangjin-dong', '용호동': 'yongho',
+  '호계동': 'hogye', '정관읍': 'jeonggwan', '중곡동': 'junggok', '매탄동': 'maetan',
+  '아라동': 'ara', '일산동': 'ilsan-town', '금촌동': 'geumchon', '본오동': 'bono',
+  '풍덕천동': 'pungdeokcheon', '용현동': 'yonghyeon', '범어동': 'beomeo', '수완동': 'suwan',
+  '계양동': 'gyeyang-dong', '철산동': 'cheolsan', '서부동': 'seobu', '거제동': 'geoje-dong',
+  '군포동': 'gunpo-dong', '배곧동': 'baegot', '방학동': 'banghak', '장량동': 'jangryang',
+  '권선동': 'gwonseon-dong', '계산동': 'gyesan', '장안동': 'jangan-dong', '대원동': 'daewon',
+  '망포동': 'mangpo', '공도읍': 'gongdo', '둔산동': 'dunsan', '불당동': 'buldang',
+  '첨단동': 'cheomdan', '오창읍': 'ochang', '의정부동': 'uijeongbu-dong',
+  '반여동': 'banyeo', '내외동': 'naeoe', '범서읍': 'beomseo', '가정동': 'gajeong',
+  '화정동': 'hwajeong', '하안동': 'haan', '고덕동': 'godeok', '복대동': 'bokdae',
+  '선부동': 'seonbu', '호원동': 'howon', '성내동': 'seongnae', '광남동': 'gwangnam',
+  '광안동': 'gwangan', '안성동': 'anseong-dong', '암사동': 'amsa', '화도읍': 'hwado',
+  '쌍용동': 'ssangyong', '나운동': 'naun', '오포동': 'opo', '왕조동': 'wangjo',
+  '수택동': 'sutaek', '관저동': 'gwanjeo', '양재동': 'yangjae', '부개동': 'bugae',
+  '흥해읍': 'heunghae', '남양읍': 'namyang', '청룡동': 'cheongryong', '풍무동': 'pungmu',
+  '가양동': 'gayang', '와부읍': 'wabu', '신암동': 'sinam', '동춘동': 'dongchun',
+  '비산동': 'bisan', '다대동': 'dadae', '덕풍동': 'deokpung', '상인동': 'sangin',
+  '삼산동': 'samsan', '신장동': 'sinjang', '병점동': 'byeongjeom', '학익동': 'hakik',
+  '만덕동': 'mandeok', '동면': 'dong-myeon', '재송동': 'jaesong', '내서읍': 'naeseo',
+  '가좌동': 'gajwa', '은행동': 'eunhaeng', '김포본동': 'gimpo-bon', '중마동': 'jungma',
+  '증포동': 'jeungpo', '오천읍': 'ocheon', '대천동': 'daecheon', '평리동': 'pyeongri',
+  '성산동': 'seongsan-dong', '인후동': 'inhu', '호평동': 'hopyeong', '신내동': 'sinnae',
+  '청천동': 'cheongcheon', '괴정동': 'goejeong', '효성동': 'hyoseong', '성복동': 'seongbok',
+  '답십리동': 'dapsimni', '만촌동': 'manchon', '역곡동': 'yeokgok', '노형동': 'nohyeong',
+  '신흥동': 'sinheung', '소하동': 'soha', '구포동': 'gupo', '진관동': 'jingwan',
+  '홍제동': 'hongje', '양주동': 'yangju-dong', '이도동': 'ido', '월성동': 'wolseong',
+  '평화동': 'pyeonghwa', '영덕동': 'yeongdeok', '소사본동': 'sosabon', '개금동': 'gaegeum',
+  '가경동': 'gagyeong', '용산동': 'yongsan-dong', '수송동': 'susong', '진영읍': 'jinyeong',
+  '사직동': 'sajik', '반곡관설동': 'bangokgwanseol', '상일동': 'sangil', '주엽동': 'jueop',
+  '초월읍': 'chowol', '고촌읍': 'gochon', '유림동': 'yurim', '다사읍': 'dasa',
+  '고척동': 'gocheok', '기장읍': 'gijang-eup', '동천동': 'dongcheon', '묵동': 'muk-dong',
+  '오남읍': 'onam', '홍은동': 'hongeun', '삼송동': 'samsong', '웅동동': 'ungdong',
+  '진안동': 'jinan', '진천동': 'jincheon-dong', '전농동': 'jeonnong', '태평동': 'taepyeong',
+  '연수동': 'yeonsu-dong', '광양읍': 'gwangyang-eup', '작전동': 'jakjeon', '오송읍': 'osong',
+  '부곡동': 'bugok', '운양동': 'unyang', '구서동': 'guseo', '주례동': 'jurye',
+  '문산읍': 'munsan', '세류동': 'seryu', '강서동': 'gangseo-dong', '백석동': 'baekseok',
+  '양포동': 'yangpo', '부암동': 'buam', '탄현동': 'tanhyeon', '의창동': 'uichang-dong',
+  '이문동': 'imun', '석수동': 'seoksu', '장곡동': 'janggok', '북가좌동': 'bukgajwa',
+  '내손동': 'naeson',
   // Subway stations
   '강남역': 'gangnam-station', '신논현역': 'sinnonhyeon-station',
   '역삼역': 'yeoksam-station', '선릉역': 'seolleung-station',
@@ -134,14 +196,26 @@ const SLUG_MAP: Record<string, string> = {
   '인천역': 'incheon-station', '부평역': 'bupyeong-station',
 };
 
-// Simple fallback romanization for unmapped names
+// Slug resolver with a safety-net fallback.
+// Primary path: SLUG_MAP returns a clean English slug (readable, good SEO).
+// Fallback: lowercase hex of UTF-8 bytes. Ugly (e.g. "eab095eba68decbb9c") but
+// SAFE — crucially the `%` is stripped. Without that strip, an older version of
+// this code produced slugs like "%eb%aa%a9%ed%8f%ac%ec%8b%9c" that 404'd because
+// URL decoding turned the param Korean while Firestore kept the literal `%`.
+// We log a warning so missing SLUG_MAP entries are noticed, but pages still work.
 function toSlug(korean: string): string {
   if (SLUG_MAP[korean]) return SLUG_MAP[korean];
-  // Remove 시/군/구/동/읍/면 suffix for cleaner slug
   const cleaned = korean.replace(/(특별시|광역시|특별자치시|특별자치도|도)$/, '');
   if (SLUG_MAP[cleaned]) return SLUG_MAP[cleaned];
-  // Use encodeURIComponent as fallback (works for Korean SEO too)
-  return encodeURIComponent(korean).toLowerCase().replace(/%/g, '');
+
+  const slug = encodeURIComponent(korean).toLowerCase().replace(/%/g, '');
+  // Invariant: final slug must never contain `%`. If this ever trips, a future
+  // refactor removed the `replace(/%/g, '')` — do NOT weaken it; fix the refactor.
+  if (!/^[a-z0-9-]+$/.test(slug)) {
+    throw new Error(`[toSlug] Invalid slug "${slug}" for "${korean}" — must match [a-z0-9-]+`);
+  }
+  console.warn(`[toSlug] "${korean}" missing from SLUG_MAP — using hex fallback "${slug}". Add a proper romanization to src/lib/keywords.ts.`);
+  return slug;
 }
 
 // --- Specialty definitions ---

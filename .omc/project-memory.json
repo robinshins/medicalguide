@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1775886812100,
+  "lastScanned": 1776868118742,
   "projectRoot": "/Users/singyuseob/medicalkoreaguide",
   "techStack": {
     "languages": [
@@ -74,7 +74,7 @@
       "path": "public",
       "purpose": "Public files",
       "fileCount": 13,
-      "lastAccessed": 1775886811996,
+      "lastAccessed": 1776868118723,
       "keyFiles": [
         "AGENTS.md",
         "c3452bc6ba68afc0a9746c8a940551a6.txt",
@@ -87,7 +87,7 @@
       "path": "src",
       "purpose": "Source code",
       "fileCount": 2,
-      "lastAccessed": 1775886812002,
+      "lastAccessed": 1776868118723,
       "keyFiles": [
         "AGENTS.md"
       ]
@@ -96,7 +96,7 @@
       "path": "src/app",
       "purpose": "Application code",
       "fileCount": 7,
-      "lastAccessed": 1775886812072,
+      "lastAccessed": 1776868118731,
       "keyFiles": [
         "AGENTS.md",
         "apple-icon.png",
@@ -107,7 +107,7 @@
       "path": "src/lib",
       "purpose": "Library code",
       "fileCount": 13,
-      "lastAccessed": 1775886812074,
+      "lastAccessed": 1776868118731,
       "keyFiles": [
         "AGENTS.md",
         "articles.ts",
@@ -117,10 +117,58 @@
   },
   "hotPaths": [
     {
-      "path": "src/lib/publish.ts",
-      "accessCount": 2,
-      "lastAccessed": 1775886850673,
+      "path": "src/lib/keywords.ts",
+      "accessCount": 11,
+      "lastAccessed": 1776869232945,
+      "type": "directory"
+    },
+    {
+      "path": "src/lib/articles.ts",
+      "accessCount": 3,
+      "lastAccessed": 1776868860689,
       "type": "file"
+    },
+    {
+      "path": "src/lib",
+      "accessCount": 1,
+      "lastAccessed": 1776868148969,
+      "type": "directory"
+    },
+    {
+      "path": "src/app/[lang]/[category]/[slug]/page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776868180046,
+      "type": "file"
+    },
+    {
+      "path": "src/app/[lang]/[category]/page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776868345035,
+      "type": "file"
+    },
+    {
+      "path": "src/app/api/sitemap/route.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776868358964,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/publish.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776868359312,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/generator.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776868692643,
+      "type": "directory"
+    },
+    {
+      "path": "",
+      "accessCount": 1,
+      "lastAccessed": 1776868719476,
+      "type": "directory"
     }
   ],
   "userDirectives": []

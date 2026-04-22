@@ -36,8 +36,19 @@ export async function getArticles(lang: string, category?: string, limit?: numbe
 
 // --- Get single article ---
 export async function getArticle(lang: string, category: string, slug: string): Promise<Article | null> {
-  const id = `${category}-${slug}-${lang}`;
-  const doc = await db.collection(getCollection(category)).doc(id).get();
+  const col = db.collection(getCollection(category));
+  let doc = await col.doc(`${category}-${slug}-${lang}`).get();
+
+  // Legacy fallback: some articles were saved with slugs like "%eb%aa%a9%ed%8f%ac%ec%8b%9c-implant"
+  // (literal lowercase percent-encoded Korean). Next.js decodes the incoming URL once, so the
+  // slug param arrives as Korean; retry lookup with the re-encoded form.
+  if (!doc.exists) {
+    const encoded = encodeURIComponent(slug).toLowerCase();
+    if (encoded !== slug) {
+      doc = await col.doc(`${category}-${encoded}-${lang}`).get();
+    }
+  }
+
   if (!doc.exists) return null;
   return doc.data() as Article;
 }
