@@ -35,22 +35,33 @@ export async function getArticles(lang: string, category?: string, limit?: numbe
 }
 
 // --- Get single article ---
+// Tries multiple doc ID forms because Next.js 16 passes `slug` differently to
+// generateMetadata (often still percent-encoded) vs the page component (decoded).
+// Additionally, some legacy articles were saved with slugs like
+// "%eb%aa%a9%ed%8f%ac%ec%8b%9c-implant" — literal lowercase percent-encoded Korean.
 export async function getArticle(lang: string, category: string, slug: string): Promise<Article | null> {
   const col = db.collection(getCollection(category));
-  let doc = await col.doc(`${category}-${slug}-${lang}`).get();
 
-  // Legacy fallback: some articles were saved with slugs like "%eb%aa%a9%ed%8f%ac%ec%8b%9c-implant"
-  // (literal lowercase percent-encoded Korean). Next.js decodes the incoming URL once, so the
-  // slug param arrives as Korean; retry lookup with the re-encoded form.
-  if (!doc.exists) {
-    const encoded = encodeURIComponent(slug).toLowerCase();
-    if (encoded !== slug) {
-      doc = await col.doc(`${category}-${encoded}-${lang}`).get();
-    }
+  // Normalize: decode in case the slug is still percent-encoded. Already-decoded
+  // Korean passes through unchanged.
+  let decoded = slug;
+  try { decoded = decodeURIComponent(slug); } catch { /* malformed, keep raw */ }
+
+  const encodedLower = encodeURIComponent(decoded).toLowerCase();
+
+  // Try each candidate form; dedupe so we don't hit Firestore more than needed.
+  const candidates = Array.from(new Set([
+    `${category}-${slug}-${lang}`,         // raw param
+    `${category}-${decoded}-${lang}`,      // decoded (e.g. "안성시")
+    `${category}-${encodedLower}-${lang}`, // legacy lowercase-encoded (e.g. "%ec%95%88...")
+  ]));
+
+  for (const id of candidates) {
+    const doc = await col.doc(id).get();
+    if (doc.exists) return doc.data() as Article;
   }
 
-  if (!doc.exists) return null;
-  return doc.data() as Article;
+  return null;
 }
 
 // --- Get all articles for sitemap ---

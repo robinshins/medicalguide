@@ -117,15 +117,51 @@
   },
   "hotPaths": [
     {
+      "path": "src/lib/i18n.ts",
+      "accessCount": 16,
+      "lastAccessed": 1776870453452,
+      "type": "file"
+    },
+    {
       "path": "src/lib/keywords.ts",
-      "accessCount": 11,
-      "lastAccessed": 1776869232945,
+      "accessCount": 12,
+      "lastAccessed": 1776869732754,
       "type": "directory"
     },
     {
       "path": "src/lib/articles.ts",
+      "accessCount": 8,
+      "lastAccessed": 1776870423807,
+      "type": "file"
+    },
+    {
+      "path": "src/app/[lang]/[category]/page.tsx",
+      "accessCount": 6,
+      "lastAccessed": 1776870429445,
+      "type": "file"
+    },
+    {
+      "path": "src/app/components/SearchBox.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1776869694081,
+      "type": "file"
+    },
+    {
+      "path": "src/app/[lang]/[category]/[slug]/page.tsx",
       "accessCount": 3,
-      "lastAccessed": 1776868860689,
+      "lastAccessed": 1776870430262,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/publish.ts",
+      "accessCount": 2,
+      "lastAccessed": 1776870424736,
+      "type": "file"
+    },
+    {
+      "path": "src/app/api/sitemap/route.ts",
+      "accessCount": 2,
+      "lastAccessed": 1776870452216,
       "type": "file"
     },
     {
@@ -133,30 +169,6 @@
       "accessCount": 1,
       "lastAccessed": 1776868148969,
       "type": "directory"
-    },
-    {
-      "path": "src/app/[lang]/[category]/[slug]/page.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1776868180046,
-      "type": "file"
-    },
-    {
-      "path": "src/app/[lang]/[category]/page.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1776868345035,
-      "type": "file"
-    },
-    {
-      "path": "src/app/api/sitemap/route.ts",
-      "accessCount": 1,
-      "lastAccessed": 1776868358964,
-      "type": "file"
-    },
-    {
-      "path": "src/lib/publish.ts",
-      "accessCount": 1,
-      "lastAccessed": 1776868359312,
-      "type": "file"
     },
     {
       "path": "src/lib/generator.ts",
@@ -169,6 +181,60 @@
       "accessCount": 1,
       "lastAccessed": 1776868719476,
       "type": "directory"
+    },
+    {
+      "path": "src/app/components/LangDropdown.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776869641041,
+      "type": "file"
+    },
+    {
+      "path": "test-fallback.mjs",
+      "accessCount": 1,
+      "lastAccessed": 1776869961690,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/firebase.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776870202431,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/types.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776870424200,
+      "type": "file"
+    },
+    {
+      "path": "src/app/[lang]/page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776870429090,
+      "type": "file"
+    },
+    {
+      "path": "publish-action.js",
+      "accessCount": 1,
+      "lastAccessed": 1776870440316,
+      "type": "file"
+    },
+    {
+      "path": "src/app/api/publish/route.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776870440451,
+      "type": "file"
+    },
+    {
+      "path": "vercel.json",
+      "accessCount": 1,
+      "lastAccessed": 1776870447466,
+      "type": "file"
+    },
+    {
+      "path": "src/app/api/indexnow/route.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776870452639,
+      "type": "file"
     }
   ],
   "userDirectives": []

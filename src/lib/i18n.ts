@@ -49,6 +49,10 @@ export const UI_TRANSLATIONS: Record<SupportedLang, {
   viewAll: string;
   backToHome: string;
   topHospitals: string;
+  searchPlaceholder: string;
+  searchButton: string;
+  searchResultsFor: string;
+  noSearchResults: string;
 }> = {
   ko: {
     siteName: 'Medical Korea Guide',
@@ -72,6 +76,10 @@ export const UI_TRANSLATIONS: Record<SupportedLang, {
     viewAll: '전체 보기',
     backToHome: '홈으로',
     topHospitals: '추천 병원',
+    searchPlaceholder: '지역, 진료, 병원명으로 검색',
+    searchButton: '검색',
+    searchResultsFor: '검색 결과',
+    noSearchResults: '검색 결과가 없습니다.',
   },
   en: {
     siteName: 'Medical Korea Guide',
@@ -95,6 +103,10 @@ export const UI_TRANSLATIONS: Record<SupportedLang, {
     viewAll: 'View All',
     backToHome: 'Back to Home',
     topHospitals: 'Top Recommended Clinics',
+    searchPlaceholder: 'Search by region, treatment, or clinic name',
+    searchButton: 'Search',
+    searchResultsFor: 'Search results for',
+    noSearchResults: 'No articles matched your search.',
   },
   'zh-TW': {
     siteName: 'Medical Korea Guide',
@@ -118,6 +130,10 @@ export const UI_TRANSLATIONS: Record<SupportedLang, {
     viewAll: '查看全部',
     backToHome: '返回首頁',
     topHospitals: '推薦醫院',
+    searchPlaceholder: '搜尋地區、診療項目或醫院名稱',
+    searchButton: '搜尋',
+    searchResultsFor: '搜尋結果',
+    noSearchResults: '沒有符合的結果。',
   },
   'zh-CN': {
     siteName: 'Medical Korea Guide',
@@ -141,6 +157,10 @@ export const UI_TRANSLATIONS: Record<SupportedLang, {
     viewAll: '查看全部',
     backToHome: '返回首页',
     topHospitals: '推荐医院',
+    searchPlaceholder: '搜索地区、诊疗项目或医院名称',
+    searchButton: '搜索',
+    searchResultsFor: '搜索结果',
+    noSearchResults: '没有匹配的结果。',
   },
   ja: {
     siteName: 'Medical Korea Guide',
@@ -164,6 +184,10 @@ export const UI_TRANSLATIONS: Record<SupportedLang, {
     viewAll: 'すべて見る',
     backToHome: 'ホームへ',
     topHospitals: 'おすすめ病院',
+    searchPlaceholder: '地域・診療科目・病院名で検索',
+    searchButton: '検索',
+    searchResultsFor: '検索結果',
+    noSearchResults: '該当する記事がありません。',
   },
   vi: {
     siteName: 'Medical Korea Guide',
@@ -187,6 +211,10 @@ export const UI_TRANSLATIONS: Record<SupportedLang, {
     viewAll: 'Xem tất cả',
     backToHome: 'Về trang chủ',
     topHospitals: 'Phòng khám được đề xuất',
+    searchPlaceholder: 'Tìm theo khu vực, dịch vụ hoặc tên phòng khám',
+    searchButton: 'Tìm',
+    searchResultsFor: 'Kết quả tìm kiếm',
+    noSearchResults: 'Không có bài viết phù hợp.',
   },
   th: {
     siteName: 'Medical Korea Guide',
@@ -210,6 +238,10 @@ export const UI_TRANSLATIONS: Record<SupportedLang, {
     viewAll: 'ดูทั้งหมด',
     backToHome: 'กลับหน้าหลัก',
     topHospitals: 'คลินิกแนะนำ',
+    searchPlaceholder: 'ค้นหาตามพื้นที่ การรักษา หรือชื่อคลินิก',
+    searchButton: 'ค้นหา',
+    searchResultsFor: 'ผลการค้นหา',
+    noSearchResults: 'ไม่พบบทความที่ตรงกัน',
   },
   ru: {
     siteName: 'Medical Korea Guide',
@@ -233,6 +265,10 @@ export const UI_TRANSLATIONS: Record<SupportedLang, {
     viewAll: 'Смотреть все',
     backToHome: 'На главную',
     topHospitals: 'Рекомендуемые клиники',
+    searchPlaceholder: 'Поиск по региону, услуге или названию клиники',
+    searchButton: 'Поиск',
+    searchResultsFor: 'Результаты поиска',
+    noSearchResults: 'Нет подходящих статей.',
   },
   es: {
     siteName: 'Medical Korea Guide',
@@ -256,6 +292,10 @@ export const UI_TRANSLATIONS: Record<SupportedLang, {
     viewAll: 'Ver todo',
     backToHome: 'Volver al inicio',
     topHospitals: 'Clínicas recomendadas',
+    searchPlaceholder: 'Buscar por zona, tratamiento o nombre de clínica',
+    searchButton: 'Buscar',
+    searchResultsFor: 'Resultados de búsqueda',
+    noSearchResults: 'No se encontraron artículos.',
   },
   'es-MX': {
     siteName: 'Medical Korea Guide',
@@ -279,6 +319,10 @@ export const UI_TRANSLATIONS: Record<SupportedLang, {
     viewAll: 'Ver todo',
     backToHome: 'Volver al inicio',
     topHospitals: 'Clínicas recomendadas',
+    searchPlaceholder: 'Buscar por zona, tratamiento o nombre de clínica',
+    searchButton: 'Buscar',
+    searchResultsFor: 'Resultados de búsqueda',
+    noSearchResults: 'No se encontraron artículos.',
   },
   'pt-BR': {
     siteName: 'Medical Korea Guide',
@@ -302,6 +346,10 @@ export const UI_TRANSLATIONS: Record<SupportedLang, {
     viewAll: 'Ver tudo',
     backToHome: 'Voltar ao início',
     topHospitals: 'Clínicas recomendadas',
+    searchPlaceholder: 'Pesquisar por região, tratamento ou clínica',
+    searchButton: 'Pesquisar',
+    searchResultsFor: 'Resultados da pesquisa',
+    noSearchResults: 'Nenhum artigo encontrado.',
   },
   de: {
     siteName: 'Medical Korea Guide',
@@ -325,6 +373,10 @@ export const UI_TRANSLATIONS: Record<SupportedLang, {
     viewAll: 'Alle anzeigen',
     backToHome: 'Zur Startseite',
     topHospitals: 'Empfohlene Kliniken',
+    searchPlaceholder: 'Nach Region, Behandlung oder Klinikname suchen',
+    searchButton: 'Suchen',
+    searchResultsFor: 'Suchergebnisse',
+    noSearchResults: 'Keine passenden Beiträge gefunden.',
   },
   it: {
     siteName: 'Medical Korea Guide',
@@ -348,5 +400,9 @@ export const UI_TRANSLATIONS: Record<SupportedLang, {
     viewAll: 'Vedi tutto',
     backToHome: 'Torna alla home',
     topHospitals: 'Cliniche consigliate',
+    searchPlaceholder: 'Cerca per zona, trattamento o nome clinica',
+    searchButton: 'Cerca',
+    searchResultsFor: 'Risultati della ricerca',
+    noSearchResults: 'Nessun articolo trovato.',
   },
 };

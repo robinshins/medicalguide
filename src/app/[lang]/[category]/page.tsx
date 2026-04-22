@@ -3,6 +3,7 @@ import { getArticles } from '@/lib/articles';
 import { SUPPORTED_LANGUAGES, UI_TRANSLATIONS, LANG_CONFIG } from '@/lib/i18n';
 import type { SupportedLang } from '@/lib/types';
 import type { Metadata } from 'next';
+import SearchBox from '@/app/components/SearchBox';
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://medicalguide.co.kr';
 
@@ -10,7 +11,7 @@ const PER_PAGE = 100;
 
 interface PageProps {
   params: Promise<{ lang: string; category: string }>;
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; q?: string }>;
 }
 
 export async function generateStaticParams() {
@@ -47,12 +48,14 @@ export const revalidate = 1800; // 30 minutes
 
 export default async function CategoryPage({ params, searchParams }: PageProps) {
   const { lang, category } = await params;
-  const { page: pageParam } = await searchParams;
+  const { page: pageParam, q: qParam } = await searchParams;
   const l = (SUPPORTED_LANGUAGES.includes(lang as SupportedLang) ? lang : 'ko') as SupportedLang;
   const t = UI_TRANSLATIONS[l];
   const categoryName = category === 'dental' ? t.dental : t.dermatology;
 
   const currentPage = Math.max(1, parseInt(pageParam || '1', 10) || 1);
+  const query = (qParam || '').trim();
+  const queryLower = query.toLowerCase();
 
   let allArticles: Awaited<ReturnType<typeof getArticles>> = [];
   try {
@@ -61,8 +64,18 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
     // Firestore may not have data yet
   }
 
-  const totalPages = Math.ceil(allArticles.length / PER_PAGE);
-  const articles = allArticles.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
+  const filteredArticles = query
+    ? allArticles.filter(a =>
+        a.title.toLowerCase().includes(queryLower) ||
+        a.metaDescription.toLowerCase().includes(queryLower) ||
+        a.slug.toLowerCase().includes(queryLower)
+      )
+    : allArticles;
+
+  const totalPages = Math.ceil(filteredArticles.length / PER_PAGE);
+  const articles = filteredArticles.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
+  const pageQueryString = query ? `&q=${encodeURIComponent(query)}` : '';
+  const firstPageSuffix = query ? `?q=${encodeURIComponent(query)}` : '';
 
   const collectionJsonLd = {
     '@context': 'https://schema.org',
@@ -91,7 +104,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
       </nav>
 
       <h1 className="text-3xl font-bold text-gray-900 mb-2">{categoryName}</h1>
-      <p className="text-gray-600 mb-8">
+      <p className="text-gray-600 mb-6">
         {t.siteDescription}
         {allArticles.length > 0 && (
           <span className="ml-2 text-sm text-gray-400">
@@ -100,10 +113,27 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
         )}
       </p>
 
+      <SearchBox
+        lang={l}
+        category={category}
+        initialQuery={query}
+        placeholder={t.searchPlaceholder}
+        ariaLabel={t.searchButton}
+      />
+
+      {query && (
+        <p className="text-sm text-gray-500 mb-4">
+          {t.searchResultsFor}: <span className="font-medium text-gray-900">&ldquo;{query}&rdquo;</span>
+          <span className="ml-2 text-gray-400">({filteredArticles.length})</span>
+        </p>
+      )}
+
       {articles.length === 0 ? (
         <div className="text-center py-16 text-gray-500">
           <p className="text-lg">
-            {l === 'ko' ? '아직 발행된 글이 없습니다. 곧 업데이트됩니다.' : 'No articles published yet. Coming soon.'}
+            {query
+              ? t.noSearchResults
+              : (l === 'ko' ? '아직 발행된 글이 없습니다. 곧 업데이트됩니다.' : 'No articles published yet. Coming soon.')}
           </p>
         </div>
       ) : (
@@ -133,7 +163,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
             <nav className="flex justify-center items-center gap-2 mt-10">
               {currentPage > 1 && (
                 <Link
-                  href={`/${l}/${category}${currentPage === 2 ? '' : `?page=${currentPage - 1}`}`}
+                  href={`/${l}/${category}${currentPage === 2 ? firstPageSuffix : `?page=${currentPage - 1}${pageQueryString}`}`}
                   className="px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-gray-50"
                 >
                   &larr; {l === 'ko' ? '이전' : 'Prev'}
@@ -143,7 +173,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
               {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                 <Link
                   key={page}
-                  href={`/${l}/${category}${page === 1 ? '' : `?page=${page}`}`}
+                  href={`/${l}/${category}${page === 1 ? firstPageSuffix : `?page=${page}${pageQueryString}`}`}
                   className={`px-4 py-2 rounded-lg text-sm ${
                     page === currentPage
                       ? 'bg-blue-600 text-white font-bold'
@@ -156,7 +186,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
 
               {currentPage < totalPages && (
                 <Link
-                  href={`/${l}/${category}?page=${currentPage + 1}`}
+                  href={`/${l}/${category}?page=${currentPage + 1}${pageQueryString}`}
                   className="px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-gray-50"
                 >
                   {l === 'ko' ? '다음' : 'Next'} &rarr;
