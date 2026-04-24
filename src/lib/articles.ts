@@ -1,6 +1,8 @@
+import { cache } from 'react';
 import { db } from './firebase';
 import type { Article, ArticleSummary } from './types';
 import { readArticleIndex, readArticleIndexesAllCategories } from './articlesIndex';
+import { SUPPORTED_LANGUAGES } from './i18n';
 
 const DENTAL_COLLECTION = 'articles';
 const DERMA_COLLECTION = 'articles_derma';
@@ -71,11 +73,14 @@ export async function getArticles(lang: string, category?: string, limit?: numbe
 }
 
 // --- Get single article ---
+// Wrapped in React cache() so generateMetadata + page render in the same
+// request share one Firestore lookup instead of hitting it twice.
+//
 // Tries multiple doc ID forms because Next.js 16 passes `slug` differently to
 // generateMetadata (often still percent-encoded) vs the page component (decoded).
 // Additionally, some legacy articles were saved with slugs like
 // "%eb%aa%a9%ed%8f%ac%ec%8b%9c-implant" — literal lowercase percent-encoded Korean.
-export async function getArticle(lang: string, category: string, slug: string): Promise<Article | null> {
+export const getArticle = cache(async (lang: string, category: string, slug: string): Promise<Article | null> => {
   const col = db.collection(getCollection(category));
 
   // Normalize: decode in case the slug is still percent-encoded. Already-decoded
@@ -98,9 +103,36 @@ export async function getArticle(lang: string, category: string, slug: string): 
   }
 
   return null;
+});
+
+// --- Get all article slugs for sitemap (cheap: reads ≤26 index docs) ---
+// Replaces a full collection scan (12K+ docs/day × crawler frequency) with
+// a bounded read of the pre-aggregated indexes. Each index holds the latest
+// 500 items per (category, lang) — ample headroom for current volume.
+//
+// NOTE: if any (category, lang) grows past 500 items, older slugs drop from
+// this output. When that becomes a real concern, split into sub-sitemaps or
+// add a paged index.
+export async function getAllArticleSlugsFromIndex(): Promise<{ lang: string; category: string; slug: string }[]> {
+  const tasks: Promise<ArticleSummary[]>[] = [];
+  for (const lang of SUPPORTED_LANGUAGES) {
+    tasks.push(readArticleIndex(lang, 'dental'));
+    tasks.push(readArticleIndex(lang, 'dermatology'));
+  }
+  const results = await Promise.all(tasks);
+  const out: { lang: string; category: string; slug: string }[] = [];
+  for (const items of results) {
+    for (const item of items) {
+      if (item.lang && item.slug && item.category) {
+        out.push({ lang: item.lang, category: item.category, slug: item.slug });
+      }
+    }
+  }
+  return out;
 }
 
-// --- Get all articles for sitemap ---
+// --- Get all articles for sitemap (expensive fallback; full collection scan) ---
+// Prefer getAllArticleSlugsFromIndex. Retained for recovery / debugging.
 // Filters out cross-site contamination: the shared Firebase project may have
 // foreign docs whose `category` field disagrees with the collection they live
 // in. Collection name is the source of truth — we drop any doc whose own

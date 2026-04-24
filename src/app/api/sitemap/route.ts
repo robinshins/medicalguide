@@ -1,7 +1,7 @@
 import { SUPPORTED_LANGUAGES } from '@/lib/i18n';
-import { getAllArticleSlugs } from '@/lib/articles';
+import { getAllArticleSlugsFromIndex } from '@/lib/articles';
 
-export const revalidate = 3600;
+export const revalidate = 86400; // 24h — crawlers re-fetch slowly, full scan is expensive
 
 export async function GET() {
   let baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.medicalguide.co.kr').trim();
@@ -25,7 +25,7 @@ export async function GET() {
 
   // Articles from Firestore
   try {
-    const articles = await getAllArticleSlugs();
+    const articles = await getAllArticleSlugsFromIndex();
     for (const a of articles) {
       urls.push(`<url><loc>${baseUrl}/${a.lang}/${a.category}/${a.slug}</loc><lastmod>${now}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>`);
     }

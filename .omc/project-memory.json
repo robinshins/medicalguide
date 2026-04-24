@@ -117,15 +117,15 @@
   },
   "hotPaths": [
     {
-      "path": "src/lib/i18n.ts",
-      "accessCount": 16,
-      "lastAccessed": 1776870453452,
+      "path": "src/lib/articles.ts",
+      "accessCount": 18,
+      "lastAccessed": 1776933023308,
       "type": "file"
     },
     {
-      "path": "src/lib/articles.ts",
-      "accessCount": 14,
-      "lastAccessed": 1776871451030,
+      "path": "src/lib/i18n.ts",
+      "accessCount": 16,
+      "lastAccessed": 1776870453452,
       "type": "file"
     },
     {
@@ -153,6 +153,12 @@
       "type": "file"
     },
     {
+      "path": "src/app/api/sitemap/route.ts",
+      "accessCount": 4,
+      "lastAccessed": 1776933034495,
+      "type": "file"
+    },
+    {
       "path": "src/app/[lang]/[category]/[slug]/page.tsx",
       "accessCount": 3,
       "lastAccessed": 1776870430262,
@@ -162,12 +168,6 @@
       "path": "src/lib/publish.ts",
       "accessCount": 3,
       "lastAccessed": 1776870628234,
-      "type": "file"
-    },
-    {
-      "path": "src/app/api/sitemap/route.ts",
-      "accessCount": 2,
-      "lastAccessed": 1776870452216,
       "type": "file"
     },
     {
