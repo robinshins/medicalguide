@@ -1,8 +1,8 @@
-name: IndexNow Submit
+name: IndexNow Submit (manual fallback)
 
+# Streaming 전환: publish-action.js가 발행 직후 IndexNow에 제출하므로
+# 일일 batch cron은 제거. 누락된 URL 수동 보충용으로 workflow_dispatch만 유지.
 on:
-  schedule:
-    - cron: '0 14 * * *'  # KST 23:00 (하루 1번, 그날 발행된 URL 모아서 제출)
   workflow_dispatch:
 
 jobs:

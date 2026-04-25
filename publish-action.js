@@ -16,6 +16,35 @@ const openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const delay = ms => new Promise(r => setTimeout(r, ms));
 const UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15';
 
+// --- IndexNow streaming submission (per-article, not daily batch) ---
+const INDEXNOW_KEY = 'c3452bc6ba68afc0a9746c8a940551a6';
+const INDEXNOW_HOST = 'medicalguide.co.kr';
+const INDEXNOW_SITE_URL = 'https://medicalguide.co.kr';
+const INDEXNOW_ENDPOINTS = [
+  'https://api.indexnow.org/indexnow',
+  'https://www.bing.com/indexnow',
+  'https://searchadvisor.naver.com/indexnow',
+];
+
+async function submitToIndexNow(urls) {
+  if (!urls || urls.length === 0) return;
+  const body = {
+    host: INDEXNOW_HOST,
+    key: INDEXNOW_KEY,
+    keyLocation: `${INDEXNOW_SITE_URL}/${INDEXNOW_KEY}.txt`,
+    urlList: urls,
+  };
+  const headers = { 'Content-Type': 'application/json; charset=utf-8' };
+  await Promise.allSettled(INDEXNOW_ENDPOINTS.map(async (endpoint) => {
+    try {
+      const res = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(body) });
+      console.log(`  [IndexNow] ${new URL(endpoint).host}: ${res.status}`);
+    } catch (e) {
+      console.log(`  [IndexNow] ${new URL(endpoint).host} failed: ${e.message}`);
+    }
+  }));
+}
+
 // Collection routing is authoritative — MUST match src/lib/articles.ts.
 // dental → 'articles', dermatology → 'articles_derma'.
 function articlesCollectionFor(category) {
@@ -632,6 +661,13 @@ JSON only: {"title":"translated","metaDescription":"translated","content":"trans
     const ok = results.filter(r => r.status === 'fulfilled').length;
     const fail = results.filter(r => r.status === 'rejected').length;
     console.log(`  Done: ${ok} ok, ${fail} failed (${((Date.now() - t6) / 1000).toFixed(1)}s)`);
+
+    // IndexNow streaming: notify search engines immediately for this article's URLs
+    const langCodes = Object.keys(langMap);
+    const succeededLangs = ['ko', ...langCodes.filter((_, i) => results[i].status === 'fulfilled')];
+    const indexNowUrls = succeededLangs.map(lang => `${INDEXNOW_SITE_URL}/${lang}/${category}/${slug}`);
+    console.log(`[IndexNow] Submitting ${indexNowUrls.length} URLs...`);
+    await submitToIndexNow(indexNowUrls);
 
     await db.collection('keywords').doc(keywordId).set({ ...keywordData, status: 'published', publishedAt: now });
     return koDoc;
