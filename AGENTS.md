@@ -257,7 +257,7 @@ src/
 | 메서드 | 경로 | 인증 | 용도 |
 |--------|------|------|------|
 | GET | `/api/cron` | Bearer CRON_SECRET | Vercel cron 트리거 |
-| POST | `/api/publish` | Bearer ANTHROPIC_API_KEY | 수동 발행 / 큐 초기화 |
+| POST | `/api/publish` | Bearer CRON_SECRET | 수동 발행 / 큐 초기화 |
 | GET | `/api/comments?articleId=...` | 없음 | 댓글 조회 |
 | POST | `/api/comments` | 없음 | 댓글 작성 |
 | GET | `/api/img?url=...` | 없음 | Naver/Kakao 이미지 프록시 |

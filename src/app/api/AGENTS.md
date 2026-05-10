@@ -24,7 +24,7 @@ Next.js API routes powering the automated publishing pipeline and user comments 
 
 ### `publish/route.ts`
 - **Method**: POST
-- **Auth**: `Bearer {ANTHROPIC_API_KEY}` header
+- **Auth**: `Bearer {CRON_SECRET}` header
 - **Purpose**: Manual publish trigger for testing. Supports `action: 'init'` to initialize the keyword queue.
 
 ### `comments/route.ts`
@@ -43,8 +43,8 @@ Next.js API routes powering the automated publishing pipeline and user comments 
 
 ### Testing Requirements
 - Cron route requires `CRON_SECRET` env var
-- Publish route requires `ANTHROPIC_API_KEY` env var for auth
+- Publish route requires `CRON_SECRET` env var for auth
 - Both require Firebase credentials for Firestore access
-- Test with: `curl -X POST -H "Authorization: Bearer $ANTHROPIC_API_KEY" http://localhost:3000/api/publish`
+- Test with: `curl -X POST -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/publish`
 
 <!-- MANUAL: Any manually added notes below this line are preserved on regeneration -->

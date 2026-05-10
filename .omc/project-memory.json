@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1777091753258,
+  "lastScanned": 1778405375028,
   "projectRoot": "/Users/singyuseob/medicalkoreaguide",
   "techStack": {
     "languages": [
@@ -74,7 +74,7 @@
       "path": "public",
       "purpose": "Public files",
       "fileCount": 13,
-      "lastAccessed": 1777091753070,
+      "lastAccessed": 1778405375002,
       "keyFiles": [
         "AGENTS.md",
         "c3452bc6ba68afc0a9746c8a940551a6.txt",
@@ -87,7 +87,7 @@
       "path": "src",
       "purpose": "Source code",
       "fileCount": 2,
-      "lastAccessed": 1777091753071,
+      "lastAccessed": 1778405375002,
       "keyFiles": [
         "AGENTS.md"
       ]
@@ -96,7 +96,7 @@
       "path": "src/app",
       "purpose": "Application code",
       "fileCount": 7,
-      "lastAccessed": 1777091753220,
+      "lastAccessed": 1778405375009,
       "keyFiles": [
         "AGENTS.md",
         "apple-icon.png",
@@ -107,7 +107,7 @@
       "path": "src/lib",
       "purpose": "Library code",
       "fileCount": 14,
-      "lastAccessed": 1777091753225,
+      "lastAccessed": 1778405375009,
       "keyFiles": [
         "AGENTS.md",
         "articles.ts",
@@ -117,15 +117,21 @@
   },
   "hotPaths": [
     {
-      "path": "publish-action.js",
-      "accessCount": 5,
-      "lastAccessed": 1777091877890,
+      "path": "src/app/api/AGENTS.md",
+      "accessCount": 3,
+      "lastAccessed": 1778405657371,
       "type": "file"
     },
     {
-      "path": "indexnow-submit.js",
-      "accessCount": 1,
-      "lastAccessed": 1777091762737,
+      "path": "src/app/api/publish/route.ts",
+      "accessCount": 2,
+      "lastAccessed": 1778405653490,
+      "type": "file"
+    },
+    {
+      "path": "AGENTS.md",
+      "accessCount": 2,
+      "lastAccessed": 1778405664235,
       "type": "file"
     }
   ],

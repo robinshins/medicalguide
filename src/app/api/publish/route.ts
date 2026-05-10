@@ -7,8 +7,8 @@ export const dynamic = 'force-dynamic';
 // Manual publish trigger (for testing)
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (authHeader !== `Bearer ${apiKey}`) {
+  const secret = process.env.CRON_SECRET;
+  if (!secret || authHeader !== `Bearer ${secret}`) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
