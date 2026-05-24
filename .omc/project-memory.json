@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1778405375028,
+  "lastScanned": 1779646202190,
   "projectRoot": "/Users/singyuseob/medicalkoreaguide",
   "techStack": {
     "languages": [
@@ -74,7 +74,7 @@
       "path": "public",
       "purpose": "Public files",
       "fileCount": 13,
-      "lastAccessed": 1778405375002,
+      "lastAccessed": 1779646202159,
       "keyFiles": [
         "AGENTS.md",
         "c3452bc6ba68afc0a9746c8a940551a6.txt",
@@ -87,7 +87,7 @@
       "path": "src",
       "purpose": "Source code",
       "fileCount": 2,
-      "lastAccessed": 1778405375002,
+      "lastAccessed": 1779646202160,
       "keyFiles": [
         "AGENTS.md"
       ]
@@ -96,7 +96,7 @@
       "path": "src/app",
       "purpose": "Application code",
       "fileCount": 7,
-      "lastAccessed": 1778405375009,
+      "lastAccessed": 1779646202169,
       "keyFiles": [
         "AGENTS.md",
         "apple-icon.png",
@@ -107,7 +107,7 @@
       "path": "src/lib",
       "purpose": "Library code",
       "fileCount": 14,
-      "lastAccessed": 1778405375009,
+      "lastAccessed": 1779646202170,
       "keyFiles": [
         "AGENTS.md",
         "articles.ts",
@@ -117,21 +117,33 @@
   },
   "hotPaths": [
     {
-      "path": "src/app/api/AGENTS.md",
-      "accessCount": 3,
-      "lastAccessed": 1778405657371,
+      "path": "public/robots.txt",
+      "accessCount": 1,
+      "lastAccessed": 1779646234492,
       "type": "file"
     },
     {
-      "path": "src/app/api/publish/route.ts",
-      "accessCount": 2,
-      "lastAccessed": 1778405653490,
+      "path": "src/app/api/sitemap/route.ts",
+      "accessCount": 1,
+      "lastAccessed": 1779646245538,
       "type": "file"
     },
     {
-      "path": "AGENTS.md",
-      "accessCount": 2,
-      "lastAccessed": 1778405664235,
+      "path": "public/naveracaef2d7c41b6acbb328f0783dfc325e.html",
+      "accessCount": 1,
+      "lastAccessed": 1779646247500,
+      "type": "file"
+    },
+    {
+      "path": "src/app/[lang]/layout.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1779646248095,
+      "type": "file"
+    },
+    {
+      "path": "src/app/layout.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1779646255339,
       "type": "file"
     }
   ],
