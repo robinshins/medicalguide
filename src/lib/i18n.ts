@@ -53,6 +53,7 @@ export const UI_TRANSLATIONS: Record<SupportedLang, {
   searchButton: string;
   searchResultsFor: string;
   noSearchResults: string;
+  proposals: string;
 }> = {
   ko: {
     siteName: 'Medical Korea Guide',
@@ -80,6 +81,7 @@ export const UI_TRANSLATIONS: Record<SupportedLang, {
     searchButton: '검색',
     searchResultsFor: '검색 결과',
     noSearchResults: '검색 결과가 없습니다.',
+    proposals: '제안/협업',
   },
   en: {
     siteName: 'Medical Korea Guide',
@@ -107,6 +109,7 @@ export const UI_TRANSLATIONS: Record<SupportedLang, {
     searchButton: 'Search',
     searchResultsFor: 'Search results for',
     noSearchResults: 'No articles matched your search.',
+    proposals: 'Proposals / Partnerships',
   },
   'zh-TW': {
     siteName: 'Medical Korea Guide',
@@ -134,6 +137,7 @@ export const UI_TRANSLATIONS: Record<SupportedLang, {
     searchButton: '搜尋',
     searchResultsFor: '搜尋結果',
     noSearchResults: '沒有符合的結果。',
+    proposals: '提案／合作',
   },
   'zh-CN': {
     siteName: 'Medical Korea Guide',
@@ -161,6 +165,7 @@ export const UI_TRANSLATIONS: Record<SupportedLang, {
     searchButton: '搜索',
     searchResultsFor: '搜索结果',
     noSearchResults: '没有匹配的结果。',
+    proposals: '提案/合作',
   },
   ja: {
     siteName: 'Medical Korea Guide',
@@ -188,6 +193,7 @@ export const UI_TRANSLATIONS: Record<SupportedLang, {
     searchButton: '検索',
     searchResultsFor: '検索結果',
     noSearchResults: '該当する記事がありません。',
+    proposals: '提案・協業',
   },
   vi: {
     siteName: 'Medical Korea Guide',
@@ -215,6 +221,7 @@ export const UI_TRANSLATIONS: Record<SupportedLang, {
     searchButton: 'Tìm',
     searchResultsFor: 'Kết quả tìm kiếm',
     noSearchResults: 'Không có bài viết phù hợp.',
+    proposals: 'Đề xuất / Hợp tác',
   },
   th: {
     siteName: 'Medical Korea Guide',
@@ -242,6 +249,7 @@ export const UI_TRANSLATIONS: Record<SupportedLang, {
     searchButton: 'ค้นหา',
     searchResultsFor: 'ผลการค้นหา',
     noSearchResults: 'ไม่พบบทความที่ตรงกัน',
+    proposals: 'ข้อเสนอ / ความร่วมมือ',
   },
   ru: {
     siteName: 'Medical Korea Guide',
@@ -269,6 +277,7 @@ export const UI_TRANSLATIONS: Record<SupportedLang, {
     searchButton: 'Поиск',
     searchResultsFor: 'Результаты поиска',
     noSearchResults: 'Нет подходящих статей.',
+    proposals: 'Предложения / Сотрудничество',
   },
   es: {
     siteName: 'Medical Korea Guide',
@@ -296,6 +305,7 @@ export const UI_TRANSLATIONS: Record<SupportedLang, {
     searchButton: 'Buscar',
     searchResultsFor: 'Resultados de búsqueda',
     noSearchResults: 'No se encontraron artículos.',
+    proposals: 'Propuestas / Colaboración',
   },
   'es-MX': {
     siteName: 'Medical Korea Guide',
@@ -323,6 +333,7 @@ export const UI_TRANSLATIONS: Record<SupportedLang, {
     searchButton: 'Buscar',
     searchResultsFor: 'Resultados de búsqueda',
     noSearchResults: 'No se encontraron artículos.',
+    proposals: 'Propuestas / Colaboración',
   },
   'pt-BR': {
     siteName: 'Medical Korea Guide',
@@ -350,6 +361,7 @@ export const UI_TRANSLATIONS: Record<SupportedLang, {
     searchButton: 'Pesquisar',
     searchResultsFor: 'Resultados da pesquisa',
     noSearchResults: 'Nenhum artigo encontrado.',
+    proposals: 'Propostas / Parcerias',
   },
   de: {
     siteName: 'Medical Korea Guide',
@@ -377,6 +389,7 @@ export const UI_TRANSLATIONS: Record<SupportedLang, {
     searchButton: 'Suchen',
     searchResultsFor: 'Suchergebnisse',
     noSearchResults: 'Keine passenden Beiträge gefunden.',
+    proposals: 'Vorschläge / Kooperation',
   },
   it: {
     siteName: 'Medical Korea Guide',
@@ -404,5 +417,6 @@ export const UI_TRANSLATIONS: Record<SupportedLang, {
     searchButton: 'Cerca',
     searchResultsFor: 'Risultati della ricerca',
     noSearchResults: 'Nessun articolo trovato.',
+    proposals: 'Proposte / Collaborazione',
   },
 };

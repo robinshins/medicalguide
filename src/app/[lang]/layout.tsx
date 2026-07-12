@@ -88,7 +88,7 @@ export default async function LangLayout({
         {/* Footer */}
         <footer className="bg-gray-950 text-gray-300">
           <div className="max-w-6xl mx-auto px-4 py-12">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
               <div>
                 <div className="flex items-center gap-2.5 mb-3">
                   <Image src="/icon-192.png" alt="Medical Korea Guide" width={24} height={24} className="rounded-md" />
@@ -102,6 +102,15 @@ export default async function LangLayout({
                   <li><Link href={`/${l}/dental`} className="hover:text-white transition-colors">{t.dental}</Link></li>
                   <li><Link href={`/${l}/dermatology`} className="hover:text-white transition-colors">{t.dermatology}</Link></li>
                 </ul>
+              </div>
+              <div>
+                <h4 className="text-xs font-semibold text-gray-300 uppercase tracking-wider mb-3">{t.proposals}</h4>
+                <a
+                  href="mailto:nosun3946@gmail.com"
+                  className="text-sm text-gray-500 hover:text-white transition-colors"
+                >
+                  nosun3946@gmail.com
+                </a>
               </div>
               <div>
                 <h4 className="text-xs font-semibold text-gray-300 uppercase tracking-wider mb-3">{t.dataSource}</h4>
