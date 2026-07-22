@@ -23,13 +23,17 @@ Medical Korea Guide is an automated multilingual SEO content platform for Korean
 keywords.ts (9,025 region × specialty combinations, ordered by population)
     → scraper.ts (Puppeteer: Naver Place + KakaoMap + Google Maps)
     → matcher.ts (GPT-5.4-mini: cross-platform hospital name/address matching)
-    → generator.ts (Claude Sonnet: Korean article → GPT-5.4-mini: 12 language translations)
+    → generator.ts (claude-sonnet-5: Korean article → GPT-5.4-mini: 12 language translations)
     → publish.ts (orchestrator: queue management + Firestore save)
 ```
 
 This pipeline runs via:
-- **GitHub Actions** (`.github/workflows/publish.yml`) — 24x daily at random intervals with 0-10min random delay
-- `/api/cron` (Vercel cron, 12x daily) — backup trigger
+- **GitHub Actions** (`.github/workflows/publish.yml`) — 12x daily, hourly KST 09:00–20:00, with a 0-10min random delay. Halved from 24x/day on 2026-07-23 while the Naver search-exposure drop is observed.
+- `/api/cron` — manual/backup trigger only. `vercel.json` no longer schedules it (its only cron is `/api/indexnow`).
+
+**Queue mechanics (`publish-action.js`)** — the queue reads `status=='pending'` ordered by `order` asc:
+- A failed keyword retries up to `MAX_ATTEMPTS` (3) by going back to `pending`; only then is it marked `failed`. Before this existed, one failure removed a keyword from the queue forever, which is how the highest-population keywords ended up unpublished while lower-priority ones went out.
+- `reclaimStaleInProgress()` returns any keyword stuck in `in_progress` past `STALE_IN_PROGRESS_MS` (1h) to `pending`, covering runners that die mid-publish. It is category-agnostic, so it reclaims dermatology keywords in this collection too.
 - `/api/publish` (manual POST trigger)
 - `node test-publish.js` (local testing)
 
@@ -70,6 +74,11 @@ category === 'dermatology' ? 'articles_derma' : 'articles'
 - `src/lib/articles.ts::getCollection()`
 - `src/lib/publish.ts::getArticlesCollection()`
 - `publish-action.js::articlesCollectionFor()`
+
+**This project is the sole publisher of dental articles.** The sibling site `medicalkoreaguide_derma`
+(www.medicalkoreaguide.com) shares this Firebase project and had a `godeok-publish.js` that also wrote
+`articles/dental-{slug}-{lang}` — the exact doc IDs this project owns. On 2026-07-22 both ran at once and
+clobbered the same 156 docs. That script is now guarded off; dental publishing must happen only from here.
 
 **Never** trust a document's own `category` field to decide where it lives. The Firebase project is shared across multiple sites, and the `articles` collection contains foreign docs with `category='dermatology'` that belong to other sites — ignore them. Always route by collection.
 

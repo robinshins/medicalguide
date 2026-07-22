@@ -11,6 +11,20 @@ const openaiClient = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// 한국어 원문 생성 모델. claude-sonnet-4-20250514는 404(retired)라 교체됨.
+const ARTICLE_MODEL = 'claude-sonnet-5';
+
+const ARTICLE_SCHEMA = {
+  type: 'object',
+  properties: {
+    title: { type: 'string' },
+    metaDescription: { type: 'string' },
+    content: { type: 'string' },
+  },
+  required: ['title', 'metaDescription', 'content'],
+  additionalProperties: false,
+} as const;
+
 function buildHospitalContext(hospitals: HospitalInfo[]): string {
   return hospitals.map((h, i) => {
     const reviews = h.naverReviews.slice(0, 5).map(r =>
@@ -130,34 +144,25 @@ e) 실용 팁${isSpecialty ? `\nf) ${keyword.specialty} 특화 정보` : ''}
 - 자연스러운 구어체 섞기
 - AI 인용에 적합한 완결 문장 작성
 
-## 응답: JSON만
-{"title":"SEO 제목 40-60자","metaDescription":"120-155자","content":"HTML 본문"}`;
+## 응답
+title(SEO 제목 40-60자), metaDescription(120-155자), content(HTML 본문)을 반환하세요.`;
 
 
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: ARTICLE_MODEL,
     max_tokens: 12000,
+    // Sonnet 5는 adaptive thinking이 기본이라 thinking 블록이 앞에 붙는다. 본문만 필요하므로 끈다.
+    thinking: { type: 'disabled' },
+    // structured outputs: 본문 HTML의 따옴표/줄바꿈 때문에 정규식 JSON 추출이 깨지던 문제를 제거
+    output_config: { format: { type: 'json_schema', schema: ARTICLE_SCHEMA } },
     messages: [{ role: 'user', content: prompt }],
   });
 
-  const text = response.content[0].type === 'text' ? response.content[0].text : '';
-  const jsonMatch = text.match(/\{[\s\S]*"title"[\s\S]*"metaDescription"[\s\S]*"content"[\s\S]*\}/);
-  if (!jsonMatch) {
-    throw new Error('Failed to parse article JSON from Claude response');
+  const textBlock = response.content.find(b => b.type === 'text');
+  if (!textBlock || textBlock.type !== 'text') {
+    throw new Error(`No text block in Claude response (stop_reason=${response.stop_reason})`);
   }
-
-  try {
-    return JSON.parse(jsonMatch[0]);
-  } catch {
-    const titleMatch = text.match(/"title"\s*:\s*"([^"]+)"/);
-    const metaMatch = text.match(/"metaDescription"\s*:\s*"([^"]+)"/);
-    const contentMatch = text.match(/"content"\s*:\s*"([\s\S]+?)"\s*\}/);
-    return {
-      title: titleMatch?.[1] || `${keyword.keyword} 추천 ${hospitals.length}곳`,
-      metaDescription: metaMatch?.[1] || `${keyword.region} ${categoryKo} 추천. 네이버/카카오 리뷰 기반 실제 방문자 후기와 전문의 정보를 종합 분석했습니다.`,
-      content: contentMatch?.[1] || text,
-    };
-  }
+  return JSON.parse(textBlock.text);
 }
 
 // --- Translate article to other languages ---

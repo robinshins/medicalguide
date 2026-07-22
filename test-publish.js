@@ -16,6 +16,20 @@ const openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const delay = ms => new Promise(r => setTimeout(r, ms));
 const UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15';
 
+// 한국어 원문 생성 모델. claude-sonnet-4-20250514는 404(retired)라 교체됨.
+const ARTICLE_MODEL = 'claude-sonnet-5';
+
+const ARTICLE_SCHEMA = {
+  type: 'object',
+  properties: {
+    title: { type: 'string' },
+    metaDescription: { type: 'string' },
+    content: { type: 'string' },
+  },
+  required: ['title', 'metaDescription', 'content'],
+  additionalProperties: false,
+};
+
 // --- Promoted hospitals config ---
 const PROMOTED_HOSPITALS = [
   {
@@ -541,18 +555,18 @@ f) 실용 팁${isSpecialty ? `\ng) ${keywordData.specialty} 특화 정보` : ''}
 - 제목: "${keywordData.keyword}" 포함, 40-60자, 숫자 포함
 - 메타: 120-155자
 
-JSON으로만 응답:
-{"title":"SEO 제목","metaDescription":"메타설명","content":"HTML 본문"}`;
+title(SEO 제목), metaDescription(메타설명), content(HTML 본문)을 반환하세요.`;
 
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: ARTICLE_MODEL,
     max_tokens: 12000,
+    thinking: { type: 'disabled' },
+    output_config: { format: { type: 'json_schema', schema: ARTICLE_SCHEMA } },
     messages: [{ role: 'user', content: prompt }],
   });
-  const text = response.content[0].text;
-  const jsonMatch = text.match(/\{[\s\S]*"title"[\s\S]*"content"[\s\S]*\}/);
-  if (!jsonMatch) throw new Error('Failed to parse article');
-  return JSON.parse(jsonMatch[0]);
+  const textBlock = response.content.find(b => b.type === 'text');
+  if (!textBlock) throw new Error(`No text block in Claude response (stop_reason=${response.stop_reason})`);
+  return JSON.parse(textBlock.text);
 }
 
 // ============================================================

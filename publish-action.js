@@ -16,6 +16,27 @@ const openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const delay = ms => new Promise(r => setTimeout(r, ms));
 const UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15';
 
+// 한국어 원문 생성 모델. claude-sonnet-4-20250514는 404(retired)라 교체됨.
+const ARTICLE_MODEL = 'claude-sonnet-5';
+
+// 한 키워드를 몇 번까지 재시도할지. 초과하면 status='failed'로 확정.
+const MAX_ATTEMPTS = 3;
+
+// 이 시간이 지나도 in_progress면 러너가 중간에 죽은 것으로 보고 큐로 되돌린다.
+// (Actions job timeout이 15분이므로 그보다 넉넉하게 잡음)
+const STALE_IN_PROGRESS_MS = 60 * 60 * 1000;
+
+const ARTICLE_SCHEMA = {
+  type: 'object',
+  properties: {
+    title: { type: 'string' },
+    metaDescription: { type: 'string' },
+    content: { type: 'string' },
+  },
+  required: ['title', 'metaDescription', 'content'],
+  additionalProperties: false,
+};
+
 // --- IndexNow streaming submission (per-article, not daily batch) ---
 const INDEXNOW_KEY = 'c3452bc6ba68afc0a9746c8a940551a6';
 const INDEXNOW_HOST = 'medicalguide.co.kr';
@@ -437,18 +458,20 @@ f) 실용 팁${isSpecialty ? `\ng) ${keywordData.specialty} 특화 정보` : ''}
 - 제목: "${keywordData.keyword}" 포함, 40-60자, 숫자 포함
 - 메타: 120-155자
 
-JSON으로만 응답:
-{"title":"SEO 제목","metaDescription":"메타설명","content":"HTML 본문"}`;
+title(SEO 제목), metaDescription(메타설명), content(HTML 본문)을 반환하세요.`;
 
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: ARTICLE_MODEL,
     max_tokens: 12000,
+    // Sonnet 5는 adaptive thinking이 기본이라 thinking 블록이 앞에 붙는다. 본문만 필요하므로 끈다.
+    thinking: { type: 'disabled' },
+    // structured outputs: 본문 HTML의 따옴표/줄바꿈 때문에 정규식 JSON 추출이 깨지던 문제를 제거
+    output_config: { format: { type: 'json_schema', schema: ARTICLE_SCHEMA } },
     messages: [{ role: 'user', content: prompt }],
   });
-  const text = response.content[0].text;
-  const jsonMatch = text.match(/\{[\s\S]*"title"[\s\S]*"content"[\s\S]*\}/);
-  if (!jsonMatch) throw new Error('Failed to parse article');
-  return JSON.parse(jsonMatch[0]);
+  const textBlock = response.content.find(b => b.type === 'text');
+  if (!textBlock) throw new Error(`No text block in Claude response (stop_reason=${response.stop_reason})`);
+  return JSON.parse(textBlock.text);
 }
 
 // ============================================================
@@ -669,7 +692,11 @@ JSON only: {"title":"translated","metaDescription":"translated","content":"trans
     console.log(`[IndexNow] Submitting ${indexNowUrls.length} URLs...`);
     await submitToIndexNow(indexNowUrls);
 
-    await db.collection('keywords').doc(keywordId).set({ ...keywordData, status: 'published', publishedAt: now });
+    // retryCount/lastError are carried in keywordData; clear them so a keyword that
+    // succeeded after a retry starts clean if it is ever re-published.
+    await db.collection('keywords').doc(keywordId).set({
+      ...keywordData, status: 'published', publishedAt: now, retryCount: 0, lastError: null,
+    });
     return koDoc;
   } catch (e) {
     await browser.close();
@@ -677,10 +704,31 @@ JSON only: {"title":"translated","metaDescription":"translated","content":"trans
   }
 }
 
+async function reclaimStaleInProgress() {
+  const snap = await db.collection('keywords').where('status', '==', 'in_progress').get();
+  if (snap.empty) return;
+  const cutoff = Date.now() - STALE_IN_PROGRESS_MS;
+  const stale = snap.docs.filter(d => {
+    const at = d.data().lastAttemptAt;
+    // No timestamp at all means it predates this field — treat as stale.
+    return !at || new Date(at).getTime() < cutoff;
+  });
+  if (stale.length === 0) return;
+  const batch = db.batch();
+  stale.forEach(d => batch.update(d.ref, { status: 'pending' }));
+  await batch.commit();
+  console.log(`[Action] Reclaimed ${stale.length} stale in_progress keyword(s) back to pending`);
+}
+
 // --- Main: Auto-fetch next pending keyword from Firestore ---
 async function main() {
   console.log('[Action] Fetching next pending keyword from Firestore...');
   const totalStart = Date.now();
+
+  // Self-heal: a runner that dies mid-publish (job timeout, cancelled run) leaves the
+  // keyword stuck at in_progress and nothing ever picks it up again. That is what left
+  // 294 keywords stranded. Reclaim anything that has been in_progress too long.
+  await reclaimStaleInProgress();
 
   // Get next pending keyword ordered by 'order' field
   const snap = await db.collection('keywords')
@@ -695,7 +743,26 @@ async function main() {
   }
 
   const kw = snap.docs[0].data();
-  console.log(`[Action] Next: "${kw.keyword}" (order: ${kw.order}, category: ${kw.category})`);
+  const attempt = (kw.retryCount || 0) + 1;
+  console.log(`[Action] Next: "${kw.keyword}" (order: ${kw.order}, category: ${kw.category}, attempt ${attempt}/${MAX_ATTEMPTS})`);
+
+  // A failure used to set status='failed' permanently, and the queue only reads
+  // status=='pending' — so any keyword that hit a transient error (API outage,
+  // scraper hiccup, runner timeout) was skipped forever. That is how the queue
+  // ended up with holes at the highest-population keywords while lower-priority
+  // ones were published. Retry a few times before giving up for good.
+  const giveUp = async (reason) => {
+    const failedForGood = attempt >= MAX_ATTEMPTS;
+    await db.collection('keywords').doc(kw.id).update({
+      status: failedForGood ? 'failed' : 'pending',
+      retryCount: attempt,
+      lastError: String(reason).substring(0, 300),
+      lastAttemptAt: new Date().toISOString(),
+    });
+    console.log(failedForGood
+      ? `[Action] attempt ${attempt}/${MAX_ATTEMPTS} — giving up, marked failed`
+      : `[Action] attempt ${attempt}/${MAX_ATTEMPTS} — returned to queue for retry`);
+  };
 
   // Random delay 0~10 minutes to avoid mechanical publish pattern
   const randomDelay = Math.floor(Math.random() * 10 * 60 * 1000);
@@ -703,8 +770,12 @@ async function main() {
   await delay(randomDelay);
   console.log('[Action] Starting publish...\n');
 
-  // Mark as in_progress
-  await db.collection('keywords').doc(kw.id).update({ status: 'in_progress' });
+  // Mark as in_progress. lastAttemptAt is what lets reclaimStaleInProgress() tell a
+  // genuinely running job from one whose runner died.
+  await db.collection('keywords').doc(kw.id).update({
+    status: 'in_progress',
+    lastAttemptAt: new Date().toISOString(),
+  });
 
   try {
     const result = await publishOneArticle(kw);
@@ -718,12 +789,11 @@ async function main() {
       console.log(`${'='.repeat(60)}`);
     } else {
       console.log(`\nFailed: no hospitals found (${totalTime}s)`);
-      // Mark as failed so we skip it next time
-      await db.collection('keywords').doc(kw.id).update({ status: 'failed' });
+      await giveUp('no hospitals found');
     }
   } catch (e) {
     console.error('\nError:', e.message);
-    await db.collection('keywords').doc(kw.id).update({ status: 'failed' });
+    await giveUp(e.message);
     process.exit(1);
   }
 

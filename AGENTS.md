@@ -36,11 +36,11 @@
 | UI | React 19 + Tailwind CSS 3 | 프론트엔드 |
 | DB | Firebase Firestore | 글/키워드 큐/댓글 저장 |
 | 스크래핑 | Puppeteer Core + @sparticuz/chromium | Naver/Kakao/Google 데이터 수집 |
-| 글 생성 | Claude Sonnet 4 API | 한국어 원문 작성 |
+| 글 생성 | claude-sonnet-5 API | 한국어 원문 작성 |
 | 번역 | GPT-5.4-mini | 12개 언어 병렬 번역 |
 | 병원 매칭 | GPT-5.4-mini | 네이버↔카카오↔구글 동일병원 식별 |
 | 배포 | Vercel | 웹 호스팅 + 백업 cron |
-| CI/CD | GitHub Actions | 글 자동 발행 (24회/일) |
+| CI/CD | GitHub Actions | 글 자동 발행 (12회/일) |
 | 검색엔진 | IndexNow | 새 글 발행 시 Bing/Yandex 즉시 알림 |
 | 분석 | Google Analytics (G-VVC2XX5P0N) | 트래픽 분석 |
 
@@ -153,7 +153,7 @@ src/
 
 ### 4-4. 글 생성 (`generator.ts`)
 
-**한국어 원문** (Claude Sonnet 4):
+**한국어 원문** (claude-sonnet-5):
 ```
 프롬프트에 포함되는 정보:
 - 5개 병원의 전체 데이터 (주소, 평점, 리뷰 원문, 전문의 정보, SNS)
@@ -265,7 +265,7 @@ src/
 ## 8. 자동화 (GitHub Actions)
 
 **`.github/workflows/publish.yml`**:
-- 하루 24회 실행 (30분 간격, 각각 다른 분에 실행)
+- 하루 12회 실행 (1시간 간격, KST 09:00~20:00). 2026-07-23에 24회/일에서 절반으로 축소
 - 0~10분 랜덤 딜레이 (패턴 감지 방지)
 - Chrome 설치 → npm ci → .env.local 생성 → `node publish-action.js` 실행
 - 발행 성공 시 IndexNow로 Bing/Yandex에 URL 제출
@@ -324,8 +324,8 @@ npm run build
 |------|------|
 | 전체 키워드 수 | 9,025 |
 | 지원 언어 | 13 |
-| 하루 발행 횟수 | 24 (GitHub Actions) |
+| 하루 발행 횟수 | 12 (GitHub Actions) |
 | 하루 최대 글 수 | 24 × 13 = 312 |
-| 전체 발행 완료까지 | ~376일 (9,025 ÷ 24) |
+| 전체 발행 완료까지 | 발행 횟수 12회/일 기준 재산정 필요 |
 | 1회 발행 소요 시간 | ~5분 (스크래핑 80초 + 글 생성 120초 + 번역 50초) |
 | Firestore 문서 (완료 시) | ~117,325 (9,025 × 13) |
