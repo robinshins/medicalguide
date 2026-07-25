@@ -6,17 +6,15 @@ on:
   # exposure dropped; resuming at a lower cadence to limit risk while the
   # content-quality effect is observed.
   schedule:
+    # 2026-07-25에 12회 → 7회로 축소. 두 기존 사이트가 글 1편당 13개 언어를 만들어
+    # OpenAI 소비의 대부분을 차지했고, 12회 유지 시 일 3.55M으로 무료 한도 2.5M을
+    # 42% 초과했다. 7회면 두 사이트 합쳐 일 2.32M(93%)으로 한도 안에 들어온다.
     - cron: '0 0 * * *'    # KST 09:00
-    - cron: '0 1 * * *'    # KST 10:00
     - cron: '0 2 * * *'    # KST 11:00
-    - cron: '0 3 * * *'    # KST 12:00
     - cron: '0 4 * * *'    # KST 13:00
     - cron: '0 5 * * *'    # KST 14:00
-    - cron: '0 6 * * *'    # KST 15:00
     - cron: '0 7 * * *'    # KST 16:00
-    - cron: '0 8 * * *'    # KST 17:00
     - cron: '0 9 * * *'    # KST 18:00
-    - cron: '0 10 * * *'   # KST 19:00
     - cron: '0 11 * * *'   # KST 20:00
   workflow_dispatch: # Manual trigger
 
