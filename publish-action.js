@@ -591,7 +591,13 @@ f) 실용 팁${isSpecialty ? `\ng) ${keywordData.specialty} 특화 정보` : ''}
 - 제목: "${keywordData.keyword}" 포함, 40-60자, 숫자 포함
 - 메타: 120-155자
 
-title(SEO 제목), metaDescription(메타설명), content(HTML 본문)을 반환하세요.`;
+## 응답 형식 (JSON 금지, 아래 마커 3개를 정확히 사용)
+===TITLE===
+(SEO 제목)
+===META===
+(메타 설명)
+===CONTENT===
+(HTML 본문)`;
 
   // stream()을 쓴다. max_tokens를 24000으로 올리면 SDK가 비스트리밍 요청을 거부한다
   // ("Streaming is required for operations that may take longer than 10 minutes").
@@ -603,19 +609,22 @@ title(SEO 제목), metaDescription(메타설명), content(HTML 본문)을 반환
     max_tokens: 24000,
     // Sonnet 5는 adaptive thinking이 기본이라 thinking 블록이 앞에 붙는다. 본문만 필요하므로 끈다.
     thinking: { type: 'disabled' },
-    // structured outputs: 본문 HTML의 따옴표/줄바꿈 때문에 정규식 JSON 추출이 깨지던 문제를 제거
-    output_config: { format: { type: 'json_schema', schema: ARTICLE_SCHEMA } },
+    // output_config(json_schema)를 쓰지 않는다. 7월에 정규식 JSON 추출이 본문 HTML의
+    // 따옴표에서 깨져 structured outputs로 옮겼는데, 그 뒤로 글의 36%가 900~1,300자에서
+    // stop_reason=end_turn으로 조기 종료했다(절단이 아니라 모델이 스스로 끝냄).
+    // 3월 3편 → 7월 19편의 급증 시점이 이 변경과 일치한다. 같은 글을 마커 방식으로
+    // 쓰는 derma 러너는 242편 중 짧은 글이 0편이다. 마커는 JSON 이스케이프가 없어
+    // 애초에 따옴표 문제가 생기지 않으므로, 원래 문제도 함께 해결된다.
     messages: [{ role: 'user', content: prompt }],
   }).finalMessage();
-  const textBlock = response.content.find(b => b.type === 'text');
-  if (!textBlock) throw new Error(`No text block in Claude response (stop_reason=${response.stop_reason})`);
-  // 절단 검사. 이 검사가 없어서 잘린 본문이 그대로 발행되고, 그 상태로 12개 언어까지
-  // 번역돼 깨진 문서가 13배로 늘어났다. derma 러너에는 있었는데 이쪽만 빠져 있었다.
   if (response.stop_reason === 'max_tokens') {
     throw new Error(`Article truncated (max_tokens, output=${response.usage?.output_tokens})`);
   }
-  const article = JSON.parse(textBlock.text);
-  console.log(`  [claude] stop_reason=${response.stop_reason} output_tokens=${response.usage?.output_tokens} content=${(article.content||'').length}자`);
+  const text = response.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
+  const m = text.match(/===TITLE===\s*([\s\S]*?)\s*===META===\s*([\s\S]*?)\s*===CONTENT===\s*([\s\S]*?)\s*$/);
+  if (!m) throw new Error(`Failed to parse article (markers not found, stop_reason=${response.stop_reason})`);
+  const article = { title: m[1].trim(), metaDescription: m[2].trim(), content: m[3].trim() };
+  console.log(`  [claude] stop_reason=${response.stop_reason} output_tokens=${response.usage?.output_tokens} content=${article.content.length}자`);
   assertArticleSane(article, keywordData);
   return article;
 }
