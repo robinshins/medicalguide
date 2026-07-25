@@ -604,9 +604,10 @@ f) 실용 팁${isSpecialty ? `\ng) ${keywordData.specialty} 특화 정보` : ''}
   // finalMessage()는 stop_reason과 usage를 그대로 담은 완성 메시지를 돌려준다.
   const response = await anthropic.messages.stream({
     model: ARTICLE_MODEL,
-    // 12000이면 부족하다. 한국어 9,000자 HTML 본문은 출력 9~11K 토큰이라 한도에 붙고,
-    // 실제로 2026-07에만 19편이 병원 1곳 소개 도중 <blockquote> 한가운데서 잘린 채 발행됐다.
-    max_tokens: 24000,
+    // claude-sonnet-5의 허용 최대는 128000. 실제 본문은 9~11K면 충분하지만, 이 값 때문에
+    // 발행이 실패하는 일이 없도록 6배 여유를 둔다. 미사용분은 과금되지 않으므로 비용 영향 없음.
+    // (이전 값 12000이 한도에 붙어 본문이 잘린 채 발행되던 문제가 있었다.)
+    max_tokens: 64000,
     // Sonnet 5는 adaptive thinking이 기본이라 thinking 블록이 앞에 붙는다. 본문만 필요하므로 끈다.
     thinking: { type: 'disabled' },
     // output_config(json_schema)를 쓰지 않는다. 7월에 정규식 JSON 추출이 본문 HTML의
