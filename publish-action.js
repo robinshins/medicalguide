@@ -593,7 +593,10 @@ f) 실용 팁${isSpecialty ? `\ng) ${keywordData.specialty} 특화 정보` : ''}
 
 title(SEO 제목), metaDescription(메타설명), content(HTML 본문)을 반환하세요.`;
 
-  const response = await anthropic.messages.create({
+  // stream()을 쓴다. max_tokens를 24000으로 올리면 SDK가 비스트리밍 요청을 거부한다
+  // ("Streaming is required for operations that may take longer than 10 minutes").
+  // finalMessage()는 stop_reason과 usage를 그대로 담은 완성 메시지를 돌려준다.
+  const response = await anthropic.messages.stream({
     model: ARTICLE_MODEL,
     // 12000이면 부족하다. 한국어 9,000자 HTML 본문은 출력 9~11K 토큰이라 한도에 붙고,
     // 실제로 2026-07에만 19편이 병원 1곳 소개 도중 <blockquote> 한가운데서 잘린 채 발행됐다.
@@ -603,7 +606,7 @@ title(SEO 제목), metaDescription(메타설명), content(HTML 본문)을 반환
     // structured outputs: 본문 HTML의 따옴표/줄바꿈 때문에 정규식 JSON 추출이 깨지던 문제를 제거
     output_config: { format: { type: 'json_schema', schema: ARTICLE_SCHEMA } },
     messages: [{ role: 'user', content: prompt }],
-  });
+  }).finalMessage();
   const textBlock = response.content.find(b => b.type === 'text');
   if (!textBlock) throw new Error(`No text block in Claude response (stop_reason=${response.stop_reason})`);
   // 절단 검사. 이 검사가 없어서 잘린 본문이 그대로 발행되고, 그 상태로 12개 언어까지
