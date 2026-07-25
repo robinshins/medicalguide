@@ -19,6 +19,118 @@ const UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/6
 // 한국어 원문 생성 모델. claude-sonnet-4-20250514는 404(retired)라 교체됨.
 const ARTICLE_MODEL = 'claude-sonnet-5';
 
+// 번역문에 넣을 언어별 "외국인 환자 관점" 표현.
+//
+// 왜 필요한가: 지금까지 번역문은 한국어 원문을 그대로 옮긴 것이라, 외국인이 실제로
+// 검색하는 표현("English-speaking dentist in Gangnam", "英語対応")이 본문에 아예
+// 없었다. AI 검색(ChatGPT/Perplexity)은 그 의도로 질문을 받으므로, 해당 표현이
+// 문서에 없으면 인용 후보에 오르지 못한다.
+//
+// nativeQuery: 그 언어권 사용자가 실제로 입력하는 검색어 형태
+// angle: 번역가에게 추가로 요구할 관점 (원문에 없는 사실을 지어내라는 뜻이 아니라,
+//        수집된 데이터를 외국인 관점에서 재서술하라는 뜻)
+const GEO_HINTS = {
+  'en': {
+    nativeQuery: 'English-speaking dentist / dental clinic in {region}, foreigner-friendly, expat',
+    angle: 'foreign residents and medical tourists who need English-speaking staff, and who care about international patient services, payment methods, and appointment booking in English',
+    mustInclude: 'English-speaking',
+  },
+  'ja': {
+    nativeQuery: '{region} 歯科 日本語対応 / 韓国 歯科 おすすめ / 医療ツーリズム',
+    angle: '日本から医療ツーリズムで訪韓する患者、および在韓日本人。日本語対応の有無、予約方法、日本の治療費との比較に関心がある',
+    mustInclude: '日本語対応',
+  },
+  'zh-TW': {
+    nativeQuery: '{region} 牙科 中文服務 / 韓國 牙科 推薦 / 醫療觀光',
+    angle: '從台灣、香港來韓國進行醫療觀光的患者，以及在韓華人。關心是否有中文服務、預約方式、與當地費用的比較',
+    mustInclude: '中文服務',
+  },
+  'zh-CN': {
+    nativeQuery: '{region} 牙科 中文服务 / 韩国 牙科 推荐 / 医疗旅游',
+    angle: '来韩国医疗旅游的中国患者和在韩华人。关心是否提供中文服务、预约流程、费用对比',
+    mustInclude: '中文服务',
+  },
+  'vi': {
+    nativeQuery: 'nha khoa nói tiếng Việt ở {region} / nha khoa Hàn Quốc cho người Việt',
+    angle: 'người Việt đang sinh sống, du học hoặc lao động tại Hàn Quốc, quan tâm đến hỗ trợ tiếng Việt, bảo hiểm và chi phí',
+    mustInclude: 'nói tiếng Việt',
+  },
+  'th': {
+    nativeQuery: 'คลินิกทันตกรรมใน {region} ที่พูดภาษาอังกฤษได้ / ทันตกรรมเกาหลี',
+    angle: 'นักท่องเที่ยวเชิงการแพทย์จากไทยและคนไทยที่อาศัยในเกาหลี สนใจการสื่อสารภาษาอังกฤษ การนัดหมาย และค่าใช้จ่าย',
+    mustInclude: 'พูดภาษาอังกฤษ',
+  },
+  'ru': {
+    nativeQuery: 'стоматология в {region} с англоговорящим персоналом / лечение зубов в Корее',
+    angle: 'русскоязычные пациенты, приезжающие в Корею на лечение, и экспаты. Важны языковая поддержка, запись на приём и сравнение стоимости',
+    mustInclude: 'англоговорящ',
+  },
+  'es': {
+    nativeQuery: 'dentista que habla inglés en {region} / clínica dental en Corea',
+    angle: 'pacientes hispanohablantes que viajan a Corea por turismo médico y expatriados; les importa la atención en inglés, la reserva de cita y el coste',
+    mustInclude: 'que habla inglés',
+  },
+  'es-MX': {
+    nativeQuery: 'dentista que habla inglés en {region} / clínica dental en Corea',
+    angle: 'pacientes de México y Latinoamérica que viajan a Corea por turismo médico; les importa la atención en inglés, cómo agendar cita y el costo',
+    mustInclude: 'que habla inglés',
+  },
+  'pt-BR': {
+    nativeQuery: 'dentista que fala inglês em {region} / clínica odontológica na Coreia',
+    angle: 'pacientes brasileiros em turismo médico na Coreia e expatriados; interessam-se por atendimento em inglês, agendamento e comparação de custos',
+    mustInclude: 'que fala inglês',
+  },
+  'de': {
+    nativeQuery: 'englischsprachiger Zahnarzt in {region} / Zahnklinik in Korea',
+    angle: 'deutschsprachige Expats und Medizintouristen in Korea; wichtig sind englischsprachige Betreuung, Terminvereinbarung und Kostenvergleich',
+    mustInclude: 'englischsprachig',
+  },
+  'it': {
+    nativeQuery: 'dentista che parla inglese a {region} / clinica dentale in Corea',
+    angle: 'pazienti italiani in turismo medico in Corea ed expat; contano l’assistenza in inglese, la prenotazione e il confronto dei costi',
+    mustInclude: 'che parla inglese',
+  },
+};
+
+
+// 번역 프롬프트 빌더. scratch/테스트에서 이 함수를 직접 require 해 검증하므로,
+// 프롬프트 문자열이 두 곳으로 갈라지지 않는다.
+function buildTranslationPrompt({ lang, langName, region, category, koArticle }) {
+  const geo = GEO_HINTS[lang];
+  const nativeQuery = (geo?.nativeQuery || '').replace(/\{region\}/g, region);
+  const categoryEn = category === 'dental' ? 'dental clinic' : 'dermatology clinic';
+  return `You are localizing a Korean medical article about ${region} ${categoryEn}s for ${langName} readers.
+
+This is LOCALIZATION, not literal translation. The audience is:
+${geo?.angle || `${langName} speakers looking for medical care in Korea`}
+
+Requirements:
+1. Translate the article into natural, native-quality ${langName}. Maintain the HTML structure exactly (same tags, same order). No emojis.
+2. Keep Korean clinic names and addresses in Korean script, but add a romanized form in parentheses the FIRST time each clinic name appears, e.g. 강남서울치과 (Gangnam Seoul Dental).
+3. THE PLACE NAME "${region}" MUST be written in a form this audience can read and search.
+   - For Latin-script languages: use the romanized name (${region} → its standard romanization) as the primary form. You may add the Korean in parentheses once.
+   - For Japanese: use katakana or the Japanese reading, e.g. カンナム / 江南.
+   - For Chinese: use the Chinese reading of the place name.
+   - NEVER leave raw Hangul as the only form of the place name in the title or meta description. A ${langName} reader cannot type Hangul into a search box.
+4. Add ONE short paragraph (2-3 sentences) near the top, right after the first <h2> section, written for this audience. It should address what a foreign patient needs to know when visiting a clinic in ${region}: language support, how to make an appointment, and what to bring. Frame it honestly — say that language support varies by clinic and should be confirmed by phone or the clinic's booking page before visiting.
+5. REQUIRED PHRASING — this is the single most important instruction. This audience searches with phrases like:
+     ${nativeQuery}
+   The exact phrase "${geo?.mustInclude}" MUST appear verbatim at least twice in the article body, and once in either the title or the meta description. Write it into sentences that read naturally — do not bolt it on or repeat it mechanically. If a sentence sounds forced, rewrite the sentence, but the phrase must be there.
+   Reason: AI assistants are asked questions using this exact phrasing. An article that only paraphrases it never becomes a candidate answer.
+6. In the FAQ section, replace ONE existing question with a question this audience would actually ask about language support or visiting as a foreigner, and answer it honestly based on the article's data.
+
+CRITICAL — do not invent facts:
+- Never claim a specific clinic has English/Japanese/Chinese-speaking staff. The source data does not contain that information. Write about how to CHECK for it, not that it exists.
+- Do not invent prices, certifications, doctor names, or international patient departments.
+- Every number (review counts, ratings, specialist counts) must match the Korean source exactly.
+
+Title: ${koArticle.title}
+Meta: ${koArticle.metaDescription}
+Content: ${koArticle.content}
+
+JSON only: {"title":"translated","metaDescription":"translated","content":"translated HTML"}`;
+}
+
 // 한 키워드를 몇 번까지 재시도할지. 초과하면 status='failed'로 확정.
 const MAX_ATTEMPTS = 3;
 
@@ -644,13 +756,7 @@ async function publishOneArticle(keywordData) {
     };
 
     async function translateWithRetry(lang, langName, maxRetries = 2) {
-      const prompt = `Translate this Korean medical article to ${langName}. Keep Korean hospital names/addresses in Korean. Maintain HTML structure. No emojis. Natural ${langName} tone.
-
-Title: ${koArticle.title}
-Meta: ${koArticle.metaDescription}
-Content: ${koArticle.content}
-
-JSON only: {"title":"translated","metaDescription":"translated","content":"translated HTML"}`;
+      const prompt = buildTranslationPrompt({ lang, langName, region, category, koArticle });
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
           const response = await openaiClient.responses.create({
@@ -800,4 +906,10 @@ async function main() {
   process.exit(0);
 }
 
-main().catch(e => { console.error(e); process.exit(1); });
+// `node publish-action.js`로 직접 실행할 때만 발행한다.
+// require로 불러오는 경우(프롬프트 검증 스크립트 등)에는 main()이 돌면 안 된다.
+if (require.main === module) {
+  main().catch(e => { console.error(e); process.exit(1); });
+}
+
+module.exports = { GEO_HINTS, buildTranslationPrompt };
