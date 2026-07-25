@@ -1,3 +1,23 @@
+// ── OpenAI 토큰 사용량 집계 ────────────────────────────────────────────────
+// 모든 사이트가 하나의 OpenAI 키를 공유하고, 그 키의 일일 무료 한도가 실제 예산
+// 상한이다. 번역(12개 언어)이 이 파이프라인의 OpenAI 소비 대부분을 차지하므로
+// 호출 지점마다 usage를 기록해 1회 발행당 실소비를 남긴다.
+const TOKENS = { calls: 0, input: 0, output: 0, byLabel: {} };
+function recordUsage(label, u) {
+  if (!u) return;
+  const i = u.input_tokens ?? u.prompt_tokens ?? 0;
+  const o = u.output_tokens ?? u.completion_tokens ?? 0;
+  TOKENS.calls++; TOKENS.input += i; TOKENS.output += o;
+  const b = TOKENS.byLabel[label] || (TOKENS.byLabel[label] = { calls: 0, input: 0, output: 0 });
+  b.calls++; b.input += i; b.output += o;
+}
+function usageSummary() {
+  const lines = Object.entries(TOKENS.byLabel).map(([k, b]) =>
+    `    ${k.padEnd(12)} calls=${String(b.calls).padStart(3)} in=${String(b.input).padStart(7)} out=${String(b.output).padStart(6)}`);
+  lines.push(`    ${'TOTAL'.padEnd(12)} calls=${String(TOKENS.calls).padStart(3)} in=${String(TOKENS.input).padStart(7)} out=${String(TOKENS.output).padStart(6)} → ${TOKENS.input + TOKENS.output} tokens`);
+  return lines.join('\n');
+}
+
 const puppeteer = require('puppeteer-core');
 const Anthropic = require('@anthropic-ai/sdk');
 const OpenAI = require('openai');
@@ -235,6 +255,7 @@ async function matchWithGPT(naverHospital, kakaoCandidates) {
         { role: 'user', content: `네이버: "${naverHospital.name}" (주소: ${naverHospital.address || '?'}, 전화: ${naverHospital.phone || '?'})\n\n카카오 후보:\n${candidateList}\n\n같은 병원을 찾아주세요. 이름이 약간 다를 수 있음. 주소/전화로 교차확인. 확실하지 않으면 -1.\n{"matchIndex": 번호, "confidence": 0.0~1.0, "reason": "근거"}` },
       ],
     });
+    recordUsage('match', response.usage);
     const jsonMatch = response.output_text.match(/\{[^}]+\}/);
     if (jsonMatch) return JSON.parse(jsonMatch[0]);
   } catch (e) { console.log('    GPT matching failed:', e.message); }
@@ -684,6 +705,7 @@ async function publishOneArticle(keywordData) {
             { role: 'user', content: `아래 ${pendingKakaoMatches.length}개 병원 각각에 대해 카카오 후보 중 같은 병원을 찾아주세요. 주소/전화로 교차확인. 확실하지 않으면 matchIndex: -1.\n\n${batchPrompt}\n\n응답 형식: [{"matchIndex": 번호, "confidence": 0.0~1.0}, ...]` },
           ],
         });
+        recordUsage('match', response.usage);
         const arrMatch = response.output_text.match(/\[[\s\S]*\]/);
         if (arrMatch) {
           const results = JSON.parse(arrMatch[0]);
@@ -763,6 +785,7 @@ async function publishOneArticle(keywordData) {
             model: 'gpt-5.4-mini',
             input: [{ role: 'user', content: prompt }],
           });
+          recordUsage('translate', response.usage);
           const text = response.output_text;
           const jsonMatch = text.match(/\{[\s\S]*"title"[\s\S]*"content"[\s\S]*\}/);
           if (!jsonMatch) throw new Error('Parse failed');
@@ -900,9 +923,11 @@ async function main() {
   } catch (e) {
     console.error('\nError:', e.message);
     await giveUp(e.message);
+  console.log(`[openai] token usage this run:\n${usageSummary()}`);
     process.exit(1);
   }
 
+  console.log(`[openai] token usage this run:\n${usageSummary()}`);
   process.exit(0);
 }
 
