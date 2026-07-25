@@ -23,12 +23,20 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # 25, not 15. The jitter step below runs INSIDE this budget, so a 15-minute
+    # timeout meant "jitter 8min + publish 6min" got killed at exactly 15:00.
+    # 11 of the last 30 runs died that way — a third of the schedule wasted, and
+    # each kill left the keyword at in_progress until the 1-hour reclaim swept it.
+    # Publish work alone takes 3-6 min; 25 leaves room for jitter plus a slow scrape.
+    timeout-minutes: 25
 
     steps:
-      - name: Random delay (0-10 min)
+      # Jitter so publishing does not hit Naver on an exact clock tick. Reduced from
+      # 0-10min to 0-4min: GitHub's cron is already imprecise (often minutes late under
+      # load), so a large jitter mostly just burns billable runner time doing nothing.
+      - name: Random delay (0-4 min)
         run: |
-          DELAY=$((RANDOM % 600))
+          DELAY=$((RANDOM % 240))
           echo "Waiting ${DELAY}s before starting..."
           sleep $DELAY
 
