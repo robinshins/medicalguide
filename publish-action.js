@@ -615,6 +615,7 @@ title(SEO 제목), metaDescription(메타설명), content(HTML 본문)을 반환
     throw new Error(`Article truncated (max_tokens, output=${response.usage?.output_tokens})`);
   }
   const article = JSON.parse(textBlock.text);
+  console.log(`  [claude] stop_reason=${response.stop_reason} output_tokens=${response.usage?.output_tokens} content=${(article.content||'').length}자`);
   assertArticleSane(article, keywordData);
   return article;
 }
