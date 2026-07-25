@@ -595,7 +595,9 @@ title(SEO 제목), metaDescription(메타설명), content(HTML 본문)을 반환
 
   const response = await anthropic.messages.create({
     model: ARTICLE_MODEL,
-    max_tokens: 12000,
+    // 12000이면 부족하다. 한국어 9,000자 HTML 본문은 출력 9~11K 토큰이라 한도에 붙고,
+    // 실제로 2026-07에만 19편이 병원 1곳 소개 도중 <blockquote> 한가운데서 잘린 채 발행됐다.
+    max_tokens: 24000,
     // Sonnet 5는 adaptive thinking이 기본이라 thinking 블록이 앞에 붙는다. 본문만 필요하므로 끈다.
     thinking: { type: 'disabled' },
     // structured outputs: 본문 HTML의 따옴표/줄바꿈 때문에 정규식 JSON 추출이 깨지던 문제를 제거
@@ -604,7 +606,29 @@ title(SEO 제목), metaDescription(메타설명), content(HTML 본문)을 반환
   });
   const textBlock = response.content.find(b => b.type === 'text');
   if (!textBlock) throw new Error(`No text block in Claude response (stop_reason=${response.stop_reason})`);
-  return JSON.parse(textBlock.text);
+  // 절단 검사. 이 검사가 없어서 잘린 본문이 그대로 발행되고, 그 상태로 12개 언어까지
+  // 번역돼 깨진 문서가 13배로 늘어났다. derma 러너에는 있었는데 이쪽만 빠져 있었다.
+  if (response.stop_reason === 'max_tokens') {
+    throw new Error(`Article truncated (max_tokens, output=${response.usage?.output_tokens})`);
+  }
+  const article = JSON.parse(textBlock.text);
+  assertArticleSane(article, keywordData);
+  return article;
+}
+
+// 파싱 성공 = 정상 글이 아니다. stop_reason이 정상이어도 본문이 짧거나 열린 태그로
+// 끝나면 발행하지 않고 던진다 — 호출부의 재시도(MAX_ATTEMPTS)가 받아서 pending으로 돌린다.
+function assertArticleSane(a, keywordData) {
+  if (!a?.title?.trim()) throw new Error('empty title');
+  if (!a?.metaDescription?.trim()) throw new Error('empty metaDescription');
+  const c = (a.content || '').trim();
+  if (c.length < 3000) throw new Error(`content too short: ${c.length} chars (잘린 글로 간주)`);
+  if (!/<\/(h2|h3|p|ul|ol|table|blockquote)>$/.test(c)) {
+    throw new Error(`content does not end on a closed block tag: ...${c.slice(-40)}`);
+  }
+  if (keywordData?.region && !c.includes(keywordData.region)) {
+    throw new Error(`content never mentions region "${keywordData.region}"`);
+  }
 }
 
 // ============================================================
