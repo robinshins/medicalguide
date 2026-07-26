@@ -704,7 +704,7 @@ function assertArticleSane(a, keywordData) {
   const c = (a.content || '').trim();
   if (c.length < 3000) throw new Error(`content too short: ${c.length} chars (잘린 글로 간주)`);
   if (!/<\/(h2|h3|p|ul|ol|table|blockquote)>$/.test(c)) {
-    throw new Error(`content does not end on a closed block tag: ...${c.slice(-40)}`);
+    throw new Error(`content does not end on a closed block tag: ...${JSON.stringify(c.slice(-120))}`);
   }
   if (keywordData?.region && !c.includes(keywordData.region)) {
     throw new Error(`content never mentions region "${keywordData.region}"`);
@@ -997,8 +997,10 @@ async function main() {
       : `[Action] attempt ${attempt}/${MAX_ATTEMPTS} — returned to queue for retry`);
   };
 
-  // Random delay 0~10 minutes to avoid mechanical publish pattern
-  const randomDelay = Math.floor(Math.random() * 10 * 60 * 1000);
+  // Random delay 0~10 minutes to avoid mechanical publish pattern.
+  // NO_DELAY=1로 끌 수 있다 — 특정 키워드를 재발행해 결과를 확인할 때 10분을
+  // 기다릴 이유가 없고, 그 사이 Firestore 연결이 끊어지는 문제도 있었다.
+  const randomDelay = process.env.NO_DELAY ? 0 : Math.floor(Math.random() * 10 * 60 * 1000);
   console.log(`[Action] Random delay: ${(randomDelay / 1000 / 60).toFixed(1)} minutes`);
   await delay(randomDelay);
   console.log('[Action] Starting publish...\n');

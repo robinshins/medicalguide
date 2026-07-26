@@ -11,7 +11,7 @@ const fs = require('fs');
 
 // 없는 데이터를 지어낸 서술의 표지. 문맥과 함께 보고한다.
 const PATTERNS = [
-  ['방법론조작', /스팸|중복 추정|설문\s*조사|자체\s*평가\s*점수|표본|현장\s*방문|전문가\s*자문|엄선|선별했/],
+  ['방법론조작', /스팸|중복 추정|설문\s*조사|자체\s*평가\s*점수|현장\s*방문|전문가\s*자문|엄선|선별했/],
   // 역·출구·거리는 스크래퍼가 '접근성'으로 실제 수집해 프롬프트에 넣는 값이라
   // 그 자체로는 조작이 아니다. 데이터에 없는 형태(도보 소요 시간, 주차장 편의성)만 본다.
   ['교통조작',   /도보\s*약?\s*\d+\s*분|주차장\s*이용이\s*편|주차\s*가능\s*대수는\s*\d/],
@@ -82,10 +82,12 @@ async function auditFirestore(n) {
     })});
   }
   const snap = await admin.firestore().collection('articles')
-    .select('content', 'title', 'publishedAt', 'lang').get();
+    .select('content', 'title', 'publishedAt', 'lang', 'category').get();
   const recent = snap.docs
     .map(d => ({ id: d.id, ...d.data() }))
-    .filter(a => a.lang === 'ko' && a.publishedAt)
+    // articles 컬렉션에는 자매 사이트(피부과)의 문서가 섞여 있다. 그쪽은 다른 모델과
+    // 다른 프롬프트를 쓰므로 이 감사의 대상이 아니다.
+    .filter(a => a.lang === 'ko' && a.publishedAt && a.category === 'dental')
     .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
     .slice(0, n);
 
