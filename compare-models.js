@@ -83,7 +83,10 @@ async function main() {
         kakaoRating: kk.rating, kakaoReviewCount: kk.reviewCount, kakaoReviews: [],
         googleRating: gg.rating, googleReviewCount: gg.reviewCount,
         imageUrls: detail.imageUrls || [], homepage: detail.homepage || '',
-        blogUrl: '', instagramUrl: '', youtubeUrl: '', facebookUrl: '', directions: '',
+        blogUrl: detail.blogUrl || '', instagramUrl: '', youtubeUrl: '', facebookUrl: '',
+        // 실제 파이프라인이 프롬프트에 넣는 '접근성' 값. 빈 문자열로 두면 모델이
+        // 없는 정보를 지어내는지 여부를 잘못 측정하게 된다.
+        directions: detail.directions || '',
       });
       console.log(`    + ${name} (네이버 리뷰 ${detail.naverReviewCount}, 리뷰본문 ${reviews.length}건)`);
     }
@@ -139,6 +142,7 @@ async function main() {
     name: h.name, address: h.address, naverReviewCount: h.naverReviewCount, naverStarRating: h.naverStarRating,
     kakaoRating: h.kakaoRating, kakaoReviewCount: h.kakaoReviewCount,
     googleRating: h.googleRating, googleReviewCount: h.googleReviewCount, specialistsInfo: h.specialistsInfo,
+    directions: h.directions,
   })) }, null, 2));
   for (const [i, m] of MODELS.entries()) {
     const r = results[`${i+1}:${m}`];
