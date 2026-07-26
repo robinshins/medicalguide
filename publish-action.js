@@ -36,8 +36,19 @@ const openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const delay = ms => new Promise(r => setTimeout(r, ms));
 const UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15';
 
-// 한국어 원문 생성 모델. claude-sonnet-4-20250514는 404(retired)라 교체됨.
-const ARTICLE_MODEL = 'claude-sonnet-5';
+// 한국어 원문 생성 모델.
+//
+// 2026-07-26에 claude-sonnet-5 → deepseek-v4-pro로 교체. 같은 프롬프트·같은 스크랩
+// 데이터로 비교했을 때(compare-models.js) 구조·수치 정확도는 동등했고(7/7), 본문은
+// 40% 길었으며, 데이터에 대한 해석이 더 붙었다. 비용은 1/13이다($21/월 → $1.6/월).
+//
+// 처음 비교에서 Pro가 방법론을 지어냈지만(하지 않은 스팸 필터링·설문조사·표본 선별),
+// 원인은 프롬프트가 수집하지 않는 데이터를 요구한 것이었다("점심시간 명시", "위치/교통",
+// "방법론 투명 공개"). 프롬프트를 조인 뒤 3회 재검증에서 재발하지 않았다.
+// 허용 외 태그(<small>, <br>)는 저장 직전 sanitizeHtml()이 제거한다.
+//
+// ARTICLE_MODEL 환경변수로 덮어쓸 수 있다. claude-* 이름이면 Anthropic 경로로 간다.
+const ARTICLE_MODEL = process.env.ARTICLE_MODEL || 'deepseek-v4-pro';
 
 // 번역문에 넣을 언어별 "외국인 환자 관점" 표현.
 //
@@ -513,7 +524,7 @@ async function searchGoogle(browser, hospitalName, region) {
 }
 
 // --- Article Generator ---
-async function generateArticle(keywordData, hospitals) {
+function buildArticlePrompt(keywordData, hospitals) {
   const totalNaverReviews = hospitals.reduce((s, h) => s + h.naverReviewCount, 0);
   const totalKakaoReviews = hospitals.reduce((s, h) => s + h.kakaoReviewCount, 0);
   const avgKakaoRating = hospitals.filter(h => h.kakaoRating).length > 0
@@ -551,16 +562,23 @@ ${hospitalContext}${dentalPriceContext}
 첫 문단에서 바로 결론. 가장 평점 높거나 리뷰 많은 1-2곳을 구체적 수치와 함께 먼저 언급.
 
 ### 2) 분석 방법 투명 공개 (h2)
-구체적 숫자와 방법론 투명 공개.
+아래에 열거된 것만 쓸 수 있다. 여기 없는 절차는 수행하지 않았으므로 언급 금지:
+- 네이버 플레이스 방문자 리뷰, 카카오맵·구글맵 평점과 리뷰 수를 수집했다
+- 건강보험심사평가원(HIRA) 공개 정보에서 전문의 수·진료과목·장비를 확인했다
+- 위 데이터를 병원별로 비교했다
+금지 예시(전부 실제로 하지 않은 일이다): 스팸/중복 리뷰 제거, 리뷰 수 하한선을 둔 선별,
+설문조사, 전문가 자문, 현장 방문, 가격 조사, 자체 평가 점수 산정, 표본 추출.
 
 ### 3) 각 병원 상세 분석 (각 h3, 600-1000자)
 <h3>병원명 - 한줄 특징</h3>
 각 병원마다 반드시:
 a) 추천 근거 (평점, 리뷰수, 전문의수)
 b) 실제 리뷰 <blockquote> 최소 2개
-c) 위치/교통 + 진료시간
-d) 진료시간, 야간진료, 점심시간 명시
-e) 방문 전 확인할 점 (예약 방식, 주차, 점심시간 등 실용 정보 위주, 병원 비하 금지)
+c) 위치 — 제공된 주소 그대로. 지하철역·출구 번호·도보 시간·주차장 정보는 데이터에
+   없으므로 절대 쓰지 말 것(추정도 금지)
+d) 진료시간 — 제공된 값만. 점심시간 데이터는 없으므로 언급 금지("~로 추정" 포함)
+e) 방문 전 확인할 점 — 데이터로 알 수 없는 항목(주차, 점심시간, 예약 방식, 언어 지원)은
+   "전화로 확인하세요" 형태로만 쓸 것. 있다고도 없다고도 단정 금지. 병원 비하 금지
 f) 실용 팁${isSpecialty ? `\ng) ${keywordData.specialty} 특화 정보` : ''}
 
 ### 4) 한눈에 비교 (h2 + HTML table)
@@ -580,12 +598,27 @@ f) 실용 팁${isSpecialty ? `\ng) ${keywordData.specialty} 특화 정보` : ''}
 
 ### 8) 마무리 + 면책 문구 + "최종 수정: ${new Date().toISOString().split('T')[0]}"
 
+## 사실 규칙 (가장 중요)
+아래 제공된 데이터에 없는 사실은 어떤 형태로도 쓰지 않는다. "추정", "~로 보입니다",
+"~일 가능성이 높습니다"로 감싸는 것도 금지 — 감싼 추측도 지어낸 사실이다.
+- 리뷰 인용은 원문과 작성자명·날짜를 글자 그대로 옮긴다. 날짜의 연도를 바꾸지 말 것
+- 리뷰 수·평점·전문의 수는 제공된 숫자와 정확히 일치해야 한다. 합계를 쓸 때는
+  어떤 값을 더한 것인지 문장에서 드러나게 쓴다
+- 데이터에서 곧바로 따라오지 않는 인과 서술 금지
+  (예: "CT 2대라 대기 시간이 없다" — 대기 시간 데이터는 없다)
+- 데이터에 근거한 해석은 권장한다 (예: "치주과 전문의가 있어 잇몸뼈 상태 평가에
+  유리할 수 있다"). 사실 서술과 해석이 구분되게 쓸 것
+
 ## 문체 규칙
 - 이모지 절대 금지
 - 구체적 숫자 필수 ("많은 리뷰" X → "리뷰 847건" O)
 - 출처 명시
 - 자연스러운 구어체 섞기
 - AI 인용에 적합한 완결 문장
+- h3 제목 앞에 번호를 붙이지 말 것 ("1. 병원명" X → "병원명" O). 번호는 CSS가 붙인다
+- FAQ의 h3는 질문만 쓸 것 ("Q. 질문?" X → "질문?" O). 답변 p도 "A." 로 시작 금지
+- 허용 태그: h2 h3 p ul ol li table thead tbody tr th td blockquote strong
+  (a, br, em, small, dl 등 그 외 태그 금지 — 사이트 CSS와 구조화 데이터가 깨진다)
 
 ## SEO
 - 제목: "${keywordData.keyword}" 포함, 40-60자, 숫자 포함
@@ -599,35 +632,67 @@ f) 실용 팁${isSpecialty ? `\ng) ${keywordData.specialty} 특화 정보` : ''}
 ===CONTENT===
 (HTML 본문)`;
 
-  // stream()을 쓴다. max_tokens를 24000으로 올리면 SDK가 비스트리밍 요청을 거부한다
-  // ("Streaming is required for operations that may take longer than 10 minutes").
-  // finalMessage()는 stop_reason과 usage를 그대로 담은 완성 메시지를 돌려준다.
+  return prompt;
+}
+
+/**
+ * 한국어 원문 생성. 모델은 ARTICLE_MODEL 환경변수로 바꿀 수 있다 —
+ * 모델 비교 테스트(compare-models.js)가 같은 프롬프트로 여러 모델을 돌리기 위해서다.
+ * deepseek-* 이름이면 DeepSeek 엔드포인트로, 아니면 Anthropic으로 보낸다.
+ */
+async function generateArticle(keywordData, hospitals, modelOverride) {
+  const prompt = buildArticlePrompt(keywordData, hospitals);
+  const model = modelOverride || ARTICLE_MODEL;
+
+  if (model.startsWith('deepseek')) {
+    const ds = new OpenAI({ apiKey: process.env.DEEPSEEK_API_KEY, baseURL: 'https://api.deepseek.com', timeout: 10*60*1000, maxRetries: 0 });
+    const r = await ds.chat.completions.create({ model, messages: [{ role: 'user', content: prompt }], max_tokens: 16000 });
+    recordUsage('article', r.usage);
+    const choice = r.choices[0];
+    if (choice.finish_reason === 'length') throw new Error(`Article truncated (finish_reason=length)`);
+    const article = parseArticleMarkers(choice.message.content, 'length');
+    console.log(`  [${model}] finish=${choice.finish_reason} output_tokens=${r.usage?.completion_tokens} content=${article.content.length}자`);
+    assertArticleSane(article, keywordData);
+    return article;
+  }
+
   const response = await anthropic.messages.stream({
-    model: ARTICLE_MODEL,
-    // claude-sonnet-5의 허용 최대는 128000. 실제 본문은 9~11K면 충분하지만, 이 값 때문에
-    // 발행이 실패하는 일이 없도록 6배 여유를 둔다. 미사용분은 과금되지 않으므로 비용 영향 없음.
-    // (이전 값 12000이 한도에 붙어 본문이 잘린 채 발행되던 문제가 있었다.)
+    model,
     max_tokens: 64000,
-    // Sonnet 5는 adaptive thinking이 기본이라 thinking 블록이 앞에 붙는다. 본문만 필요하므로 끈다.
     thinking: { type: 'disabled' },
-    // output_config(json_schema)를 쓰지 않는다. 7월에 정규식 JSON 추출이 본문 HTML의
-    // 따옴표에서 깨져 structured outputs로 옮겼는데, 그 뒤로 글의 36%가 900~1,300자에서
-    // stop_reason=end_turn으로 조기 종료했다(절단이 아니라 모델이 스스로 끝냄).
-    // 3월 3편 → 7월 19편의 급증 시점이 이 변경과 일치한다. 같은 글을 마커 방식으로
-    // 쓰는 derma 러너는 242편 중 짧은 글이 0편이다. 마커는 JSON 이스케이프가 없어
-    // 애초에 따옴표 문제가 생기지 않으므로, 원래 문제도 함께 해결된다.
     messages: [{ role: 'user', content: prompt }],
   }).finalMessage();
   if (response.stop_reason === 'max_tokens') {
     throw new Error(`Article truncated (max_tokens, output=${response.usage?.output_tokens})`);
   }
   const text = response.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
-  const m = text.match(/===TITLE===\s*([\s\S]*?)\s*===META===\s*([\s\S]*?)\s*===CONTENT===\s*([\s\S]*?)\s*$/);
-  if (!m) throw new Error(`Failed to parse article (markers not found, stop_reason=${response.stop_reason})`);
-  const article = { title: m[1].trim(), metaDescription: m[2].trim(), content: m[3].trim() };
-  console.log(`  [claude] stop_reason=${response.stop_reason} output_tokens=${response.usage?.output_tokens} content=${article.content.length}자`);
+  const article = parseArticleMarkers(text, response.stop_reason);
+  console.log(`  [${model}] stop_reason=${response.stop_reason} output_tokens=${response.usage?.output_tokens} content=${article.content.length}자`);
   assertArticleSane(article, keywordData);
   return article;
+}
+
+// 허용 태그 밖의 마크업을 제거한다. 태그만 벗기고 안의 텍스트는 남긴다.
+//
+// 모델을 바꿀 때마다 태그 어휘가 조금씩 흔들린다 — Sonnet은 깨끗했지만 DeepSeek Pro는
+// <small>/<br>을, Flash는 <a>/<em>을 섞었다. 프롬프트로 줄일 수는 있어도 0으로 만들지는
+// 못하므로, 저장 직전에 한 번 정리해 어떤 모델을 쓰든 사이트 CSS와 FAQ 스키마가
+// 같은 태그 어휘만 보게 한다.
+const ALLOWED_TAGS = new Set(['h2','h3','p','ul','ol','li','table','thead','tbody','tr','th','td','blockquote','strong']);
+function sanitizeHtml(html) {
+  return (html || '').replace(/<\/?([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>/g, (tag, name) =>
+    ALLOWED_TAGS.has(name.toLowerCase()) ? tag : ''
+  );
+}
+
+function parseArticleMarkers(text, why) {
+  const m = (text || '').match(/===TITLE===\s*([\s\S]*?)\s*===META===\s*([\s\S]*?)\s*===CONTENT===\s*([\s\S]*?)\s*$/);
+  if (!m) throw new Error(`Failed to parse article (markers not found, ${why})`);
+  return {
+    title: m[1].trim(),
+    metaDescription: m[2].trim(),
+    content: sanitizeHtml(m[3].trim()),
+  };
 }
 
 // 파싱 성공 = 정상 글이 아니다. stop_reason이 정상이어도 본문이 짧거나 열린 태그로
@@ -975,4 +1040,4 @@ if (require.main === module) {
   main().catch(e => { console.error(e); process.exit(1); });
 }
 
-module.exports = { GEO_HINTS, buildTranslationPrompt };
+module.exports = { GEO_HINTS, buildTranslationPrompt, buildArticlePrompt, sanitizeHtml, generateArticle, assertArticleSane, searchNaver, getPlaceInfo, searchKakao, searchGoogle, matchWithGPT };
