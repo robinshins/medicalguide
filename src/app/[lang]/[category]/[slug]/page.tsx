@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { localizeHours, localizeSpecialists, romanize, hasHangul } from '@/lib/hospital-i18n';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getArticle } from '@/lib/articles';
@@ -264,7 +265,15 @@ export default async function ArticlePage({ params }: PageProps) {
                         <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-gray-950 text-white text-xs font-bold shrink-0">{i + 1}</span>
                         <h3 className="font-bold text-lg text-gray-900">{hospital.name}</h3>
                       </div>
+                      {/* 병원명·주소는 한글을 유지한다 — 지도 앱 입력과 택시 기사에게
+                          보여주기 위해서다. 그 아래 라틴 표기를 덧붙여 읽을 수 있게 한다. */}
+                      {l !== 'ko' && hasHangul(hospital.name) && (
+                        <p className="text-xs text-gray-400 ml-10 -mt-0.5">{romanize(hospital.name)}</p>
+                      )}
                       <p className="text-sm text-gray-500 ml-10">{hospital.address}</p>
+                      {l !== 'ko' && hasHangul(hospital.address) && (
+                        <p className="text-xs text-gray-400 ml-10">{romanize(hospital.address)}</p>
+                      )}
                     </div>
                     <div className="flex gap-2 shrink-0">
                       {hospital.naverStarRating && (
@@ -291,16 +300,16 @@ export default async function ArticlePage({ params }: PageProps) {
                   {/* Info badges */}
                   <div className="mt-4 ml-10 flex flex-wrap gap-2 text-xs">
                     {hospital.phone && <span className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg">{hospital.phone}</span>}
-                    {hospital.businessHours && <span className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg">{hospital.businessHours}</span>}
+                    {hospital.businessHours && <span className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg">{localizeHours(hospital.businessHours, l)}</span>}
                     {hospital.naverReviewCount > 0 && <span className="bg-green-50 text-green-700 px-3 py-1.5 rounded-lg font-medium">Naver {hospital.naverReviewCount.toLocaleString()}</span>}
                     {hospital.kakaoReviewCount > 0 && <span className="bg-amber-50 text-amber-700 px-3 py-1.5 rounded-lg font-medium">Kakao {hospital.kakaoReviewCount.toLocaleString()}</span>}
                     {hospital.googleReviewCount > 0 && <span className="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg font-medium">Google {hospital.googleReviewCount.toLocaleString()}</span>}
                   </div>
 
                   {/* Specialist info */}
-                  {hospital.specialistsInfo && (
+                  {localizeSpecialists(hospital.specialistsInfo, l) && (
                     <div className="mt-3 ml-10 text-xs text-blue-700 bg-blue-50 rounded-lg px-3 py-2 inline-block font-medium">
-                      {hospital.specialistsInfo}
+                      {localizeSpecialists(hospital.specialistsInfo, l)}
                     </div>
                   )}
 

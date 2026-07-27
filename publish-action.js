@@ -673,6 +673,37 @@ async function generateArticle(keywordData, hospitals, modelOverride) {
   return article;
 }
 
+/**
+ * 병원 카드 순서를 기사 본문의 순위에 맞춘다.
+ *
+ * hospitals 배열은 네이버 검색 결과 순서일 뿐인데, 카드에는 1~5 번호가 붙고 제목도
+ * "추천 병원"이라 독자는 순위로 읽는다. 실제로 글이 1위로 꼽은 곳이 카드에서 4번으로
+ * 나오는 일이 흔했다(치과 627편 중 326편, 52%).
+ *
+ * 본문 <h3>에 병원명이 그대로 들어가므로 그 등장 순서로 재정렬한다. 매칭하지 못한
+ * 병원은 뒤에 원래 순서로 남긴다 — 못 맞춘 글이 지금보다 나빠지지는 않게.
+ *
+ * 한국어 본문에서만 순서를 정한다. 번역본의 <h3>는 병원명이 번역돼 있어 한글 매칭이
+ * 안 되는데, 번역 문서는 이 배열을 그대로 복사하므로 13개 언어가 자동으로 같아진다.
+ */
+function orderHospitalsByBody(content, hospitals) {
+  if (!content || !Array.isArray(hospitals) || hospitals.length < 2) return hospitals;
+  const heads = [...content.matchAll(/<h3[^>]*>(.*?)<\/h3>/gs)].map(m => m[1].replace(/<[^>]+>/g, ''));
+  const used = new Set();
+  const ordered = [];
+  for (const head of heads) {
+    // 이름이 서로 접두를 공유할 수 있으므로(같은 브랜드 분점) 가장 긴 일치를 고른다.
+    let best = -1, bestLen = 0;
+    hospitals.forEach((h, i) => {
+      if (used.has(i) || !h.name) return;
+      if (head.includes(h.name) && h.name.length > bestLen) { best = i; bestLen = h.name.length; }
+    });
+    if (best >= 0) { used.add(best); ordered.push(hospitals[best]); }
+  }
+  hospitals.forEach((h, i) => { if (!used.has(i)) ordered.push(h); });
+  return ordered;
+}
+
 // 허용 태그 밖의 마크업을 제거한다. 태그만 벗기고 안의 텍스트는 남긴다.
 //
 // 모델을 바꿀 때마다 태그 어휘가 조금씩 흔들린다 — Sonnet은 깨끗했지만 DeepSeek Pro는
@@ -864,7 +895,10 @@ async function publishOneArticle(keywordData) {
     const koDoc = {
       id: `${category}-${slug}-ko`, keywordId, keyword, lang: 'ko', slug, category,
       title: koArticle.title, metaDescription: koArticle.metaDescription,
-      content: koArticle.content, hospitals: hospitalsSummary,
+      content: koArticle.content,
+      // 카드 순서를 기사 본문의 순위에 맞춘다. 번역 문서는 아래에서 이 배열을
+      // 그대로 복사하므로 13개 언어가 같은 순서를 갖는다.
+      hospitals: orderHospitalsByBody(koArticle.content, hospitalsSummary),
       publishedAt: now, region, specialty: specialty || '일반',
     };
     await db.collection(articlesCollectionFor(category)).doc(koDoc.id).set(koDoc);
@@ -1043,4 +1077,4 @@ if (require.main === module) {
   main().catch(e => { console.error(e); process.exit(1); });
 }
 
-module.exports = { GEO_HINTS, buildTranslationPrompt, buildArticlePrompt, sanitizeHtml, generateArticle, assertArticleSane, searchNaver, getPlaceInfo, searchKakao, searchGoogle, matchWithGPT };
+module.exports = { GEO_HINTS, buildTranslationPrompt, buildArticlePrompt, sanitizeHtml, orderHospitalsByBody, generateArticle, assertArticleSane, searchNaver, getPlaceInfo, searchKakao, searchGoogle, matchWithGPT };
