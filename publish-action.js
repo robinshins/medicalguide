@@ -18,6 +18,28 @@ function usageSummary() {
   return lines.join('\n');
 }
 
+/**
+ * 짝 없는 서로게이트 제거.
+ *
+ * 네이버 리뷰는 본문이 잘린 채 오는 경우가 있어 이모지가 중간에서 끊긴다
+ * (U+D83D 뒤에 low surrogate 없음). 이 문자가 프롬프트에 실리면 JSON.stringify가
+ * 문법상 유효한 \ud83d 이스케이프를 만들지만 UTF-16으로는 깨진 값이라 LLM API가
+ * 요청 본문 파싱을 거부한다("400 Invalid body: failed to parse JSON value").
+ * 결정론적 실패라 재시도 3회가 전부 같은 이유로 죽고 키워드가 failed로 확정된다.
+ */
+const LONE_SURROGATE = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g;
+function cleanDeep(v) {
+  if (typeof v === 'string') return v.replace(LONE_SURROGATE, '');
+  if (Array.isArray(v)) return v.map(cleanDeep);
+  if (v && typeof v === 'object') {
+    const o = {};
+    for (const [k, x] of Object.entries(v)) o[k] = cleanDeep(x);
+    return o;
+  }
+  return v;
+}
+
+
 const puppeteer = require('puppeteer-core');
 const Anthropic = require('@anthropic-ai/sdk');
 const OpenAI = require('openai');
@@ -873,7 +895,7 @@ async function publishOneArticle(keywordData) {
     // 4. Generate Korean article
     const t4 = Date.now();
     console.log('[4/6] Generating Korean article...');
-    const koArticle = await generateArticle(keywordData, hospitals);
+    const koArticle = await generateArticle(keywordData, cleanDeep(hospitals));
     console.log(`  Title: ${koArticle.title} (${((Date.now() - t4) / 1000).toFixed(1)}s)`);
 
     const slug = specialtySlug === 'general' ? regionSlug : `${regionSlug}-${specialtySlug}`;
