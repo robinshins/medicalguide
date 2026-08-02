@@ -739,13 +739,23 @@ function sanitizeHtml(html) {
   );
 }
 
+// 모델이 본문 끝에 마커를 한 번 더 뱉는 경우가 있다(===CONTENT=== 중복).
+// 정규식은 첫 마커에서 본문을 시작해 끝까지 잡으므로 중복분이 본문 꼬리에 남고,
+// assertArticleSane의 "닫힌 블록 태그로 끝나야 한다"에 걸려 멀쩡한 글이 버려진다.
+function stripTrailingMarkers(s) {
+  let out = s.trim();
+  let prev;
+  do { prev = out; out = out.replace(/\s*===[A-Z]+===\s*$/, '').trim(); } while (out !== prev);
+  return out;
+}
+
 function parseArticleMarkers(text, why) {
   const m = (text || '').match(/===TITLE===\s*([\s\S]*?)\s*===META===\s*([\s\S]*?)\s*===CONTENT===\s*([\s\S]*?)\s*$/);
   if (!m) throw new Error(`Failed to parse article (markers not found, ${why})`);
   return {
     title: m[1].trim(),
     metaDescription: m[2].trim(),
-    content: sanitizeHtml(m[3].trim()),
+    content: sanitizeHtml(stripTrailingMarkers(m[3])),
   };
 }
 
