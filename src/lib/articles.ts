@@ -113,18 +113,27 @@ export const getArticle = cache(async (lang: string, category: string, slug: str
 // NOTE: if any (category, lang) grows past 500 items, older slugs drop from
 // this output. When that becomes a real concern, split into sub-sitemaps or
 // add a paged index.
-export async function getAllArticleSlugsFromIndex(): Promise<{ lang: string; category: string; slug: string }[]> {
+export async function getAllArticleSlugsFromIndex(): Promise<
+  { lang: string; category: string; slug: string; publishedAt?: string }[]
+> {
   const tasks: Promise<ArticleSummary[]>[] = [];
   for (const lang of SUPPORTED_LANGUAGES) {
     tasks.push(readArticleIndex(lang, 'dental'));
     tasks.push(readArticleIndex(lang, 'dermatology'));
   }
   const results = await Promise.all(tasks);
-  const out: { lang: string; category: string; slug: string }[] = [];
+  const out: { lang: string; category: string; slug: string; publishedAt?: string }[] = [];
   for (const items of results) {
     for (const item of items) {
       if (item.lang && item.slug && item.category) {
-        out.push({ lang: item.lang, category: item.category, slug: item.slug });
+        // publishedAt을 함께 넘긴다. 사이트맵이 이 값을 <lastmod>로 쓴다 —
+        // 이전에는 현재 시각을 찍어 9,457개 URL이 전부 "오늘 수정됨"으로 나갔다.
+        out.push({
+          lang: item.lang,
+          category: item.category,
+          slug: item.slug,
+          publishedAt: item.publishedAt,
+        });
       }
     }
   }

@@ -10,7 +10,17 @@ export async function GET() {
   }
   // Remove trailing slash
   baseUrl = baseUrl.replace(/\/+$/, '');
+  // 홈·카테고리처럼 계속 바뀌는 페이지에만 쓴다. 글에는 실제 발행일을 쓴다.
   const now = new Date().toISOString();
+
+  // <lastmod>는 그 URL이 마지막으로 바뀐 시점이어야 한다. 모든 글에 현재 시각을
+  // 찍으면 크롤러는 매번 전체가 갱신된 것으로 보고, 결국 이 신호를 무시한다.
+  // (실제로 이 사이트는 9,457개 URL 전부가 "오늘 수정됨"으로 나가고 있었다.)
+  const lastmodOf = (publishedAt?: string) => {
+    if (!publishedAt) return now;
+    const d = new Date(publishedAt);
+    return Number.isNaN(d.getTime()) ? now : d.toISOString();
+  };
 
   const urls: string[] = [];
 
@@ -27,7 +37,7 @@ export async function GET() {
   try {
     const articles = await getAllArticleSlugsFromIndex();
     for (const a of articles) {
-      urls.push(`<url><loc>${baseUrl}/${a.lang}/${a.category}/${a.slug}</loc><lastmod>${now}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>`);
+      urls.push(`<url><loc>${baseUrl}/${a.lang}/${a.category}/${a.slug}</loc><lastmod>${lastmodOf(a.publishedAt)}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>`);
     }
   } catch {
     // Firestore unavailable

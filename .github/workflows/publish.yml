@@ -6,16 +6,13 @@ on:
   # exposure dropped; resuming at a lower cadence to limit risk while the
   # content-quality effect is observed.
   schedule:
-    # 2026-07-25에 12회 → 7회로 축소. 두 기존 사이트가 글 1편당 13개 언어를 만들어
-    # OpenAI 소비의 대부분을 차지했고, 12회 유지 시 일 3.55M으로 무료 한도 2.5M을
-    # 42% 초과했다. 7회면 두 사이트 합쳐 일 2.32M(93%)으로 한도 안에 들어온다.
-    - cron: '0 0 * * *'    # KST 09:00
-    - cron: '0 2 * * *'    # KST 11:00
-    - cron: '0 4 * * *'    # KST 13:00
-    - cron: '0 5 * * *'    # KST 14:00
-    - cron: '0 7 * * *'    # KST 16:00
-    - cron: '0 9 * * *'    # KST 18:00
-    - cron: '0 11 * * *'   # KST 20:00
+    # 2026-08-04에 7회 → 2회로 축소. 이유는 비용이 아니라 SEO다 — 한 도메인이
+    # 하루 7편씩 쏟아내면 색인 속도가 발행 속도를 못 따라가고 대량 자동 생성으로
+    # 읽힐 위험이 있다. 번역은 그대로 12개 언어를 붙이므로 한국어 1편당 13장이
+    # 나간다. 발행 편수만 줄이고 언어 커버리지는 손대지 않는다.
+    # (이전 축소는 OpenAI 무료 한도 때문이었고, 그 제약은 이제 더 여유롭다.)
+    - cron: '0 1 * * *'    # KST 10:00
+    - cron: '0 8 * * *'    # KST 17:00
   workflow_dispatch: # Manual trigger
 
 jobs:
