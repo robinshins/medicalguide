@@ -669,7 +669,15 @@ async function generateArticle(keywordData, hospitals, modelOverride) {
 
   if (model.startsWith('deepseek')) {
     const ds = new OpenAI({ apiKey: process.env.DEEPSEEK_API_KEY, baseURL: 'https://api.deepseek.com', timeout: 10*60*1000, maxRetries: 0 });
-    const r = await ds.chat.completions.create({ model, messages: [{ role: 'user', content: prompt }], max_tokens: 16000 });
+    // DeepSeek의 허용 최대는 393216. 실제 본문은 6.5~8.7K면 끝나지만, 이 값 때문에
+    // 발행이 실패하는 일이 없도록 8배 여유를 둔다(미사용분은 과금되지 않음).
+    // 16000으로 두었다가 긴 글이 정확히 그 지점에서 잘렸다 — Claude·OpenAI 경로는
+    // 64000으로 올려두고 이 경로만 놓쳤던 것.
+    const r = await ds.chat.completions.create({
+      model,
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 64000,
+    });
     recordUsage('article', r.usage);
     const choice = r.choices[0];
     if (choice.finish_reason === 'length') throw new Error(`Article truncated (finish_reason=length)`);
