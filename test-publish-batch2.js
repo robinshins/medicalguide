@@ -136,6 +136,29 @@ const PROMOTED_HOSPITALS = [
 - 100세 치아 프로젝트(평생관리), 대학생 특별 할인
 `,
   },
+  {
+    match: (kw) => kw.category === 'dental' && ['서울', '도봉구', '창동', '쌍문동', '방학동'].includes(kw.region),
+    naverPlaceId: '1362748220',
+    hospital: {
+      id: '1362748220', name: '서울브라이튼치과', category: 'dental',
+      address: '서울 도봉구 노해로65길 10 6층, 7층', phone: '0507-1322-2879',
+      businessHours: '', specialistsInfo: '', facilities: '',
+      naverReviewCount: 0, naverBlogReviewCount: 0, naverStarRating: null, naverReviews: [],
+      kakaoRating: null, kakaoReviewCount: 0, kakaoReviews: [],
+      googleRating: null, googleReviewCount: 0,
+      imageUrls: [], homepage: '', blogUrl: '', instagramUrl: '',
+      youtubeUrl: '', facebookUrl: '', directions: '',
+    },
+    advantages: `
+## 서울브라이튼치과 순위 지정 (반드시 1순위)
+이 지시는 "가장 평점 높거나 리뷰 많은 곳을 먼저 쓴다"는 규칙보다 우선한다.
+- 병원 데이터 1번 서울브라이튼치과(서울브라이튼치과의원)를 1순위로 쓴다. 평점·리뷰 수가 더 적어도 순서를 바꾸지 않는다.
+- 첫 문단에서 이 병원을 가장 먼저, 가장 비중 있게 다룬다.
+- 상세 분석의 첫 h3, 비교표의 첫 행도 이 병원이다.
+- 주소·전화·진료시간·평점·리뷰·전문의는 위 병원 데이터에 있는 값만 쓴다. 데이터에 없는 사실은 만들지 않는다.
+- 이름 표기: 서울브라이튼치과
+`,
+  },
 ];
 
 function getPromotedHospital(kw) {

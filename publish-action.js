@@ -54,6 +54,12 @@ const db = admin.firestore();
 require('dotenv').config({ path: '.env.local' });
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// DeepSeek는 OpenAI 호환 엔드포인트. 키가 없으면 SDK가 OPENAI_API_KEY로 조용히 폴백해
+// 원인 모를 401이 나므로 자리표시자를 넣어 DeepSeek 쪽 인증 오류로 드러나게 한다.
+const deepseekClient = new OpenAI({
+  apiKey: process.env.DEEPSEEK_API_KEY || 'missing-DEEPSEEK_API_KEY',
+  baseURL: 'https://api.deepseek.com', timeout: 10 * 60 * 1000, maxRetries: 0,
+});
 
 const delay = ms => new Promise(r => setTimeout(r, ms));
 const UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15';
@@ -69,8 +75,128 @@ const UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/6
 // "방법론 투명 공개"). 프롬프트를 조인 뒤 3회 재검증에서 재발하지 않았다.
 // 허용 외 태그(<small>, <br>)는 저장 직전 sanitizeHtml()이 제거한다.
 //
-// ARTICLE_MODEL 환경변수로 덮어쓸 수 있다. claude-* 이름이면 Anthropic 경로로 간다.
-const ARTICLE_MODEL = process.env.ARTICLE_MODEL || 'deepseek-v4-pro';
+// 2026-09-23에 deepseek-v4-pro → deepseek-flash로 교체. deepseek-flash가
+// 현재 호스팅되는 DeepSeek-V4.1-Flash다. deepseek-v4-flash는 폐기된 이름이라
+// 쓰지 않는다.
+//
+// 2026-09-24에 deepseek-flash → gpt-6-luna로 교체(자매 사이트들과 통일).
+// ARTICLE_MODEL 환경변수로 덮어쓸 수 있다. claude-* → Anthropic, deepseek-* → DeepSeek,
+// 그 외(gpt-*) → OpenAI Responses API.
+const ARTICLE_MODEL = process.env.ARTICLE_MODEL || 'gpt-6-luna';
+
+// 12개 언어 번역 모델. 2026-09-24에 gpt-5.4-mini → deepseek-flash(DeepSeek-V4.1-Flash).
+// 자매 사이트(medguide-*)와 같은 선택이며, 출력 단가가 1/16이다. thinking은 끄고
+// json_object 모드로 받아 파싱 실패를 막는다.
+const TRANSLATION_MODEL = 'deepseek-flash';
+
+// 지정 지역 치과 글에서 1순위로 고정할 병원.
+// 스크랩 상위 5곳에 없으면 naverPlaceId로 직접 수집해 맨 앞에 넣는다.
+const PROMOTED_HOSPITALS = [
+  {
+    match: (kw) => kw.category === 'dental' && ['서울', '도봉구', '창동', '쌍문동', '방학동'].includes(kw.region),
+    naverPlaceId: '1362748220',
+    hospital: {
+      id: '1362748220', name: '서울브라이튼치과', category: 'dental',
+      address: '서울 도봉구 노해로65길 10 6층, 7층', phone: '0507-1322-2879',
+      businessHours: '', specialistsInfo: '', facilities: '', directions: '',
+      naverReviewCount: 0, naverBlogReviewCount: 0, naverStarRating: null, naverReviews: [],
+      kakaoRating: null, kakaoReviewCount: 0, kakaoReviews: [],
+      googleRating: null, googleReviewCount: 0,
+      imageUrls: [], homepage: '', blogUrl: '', instagramUrl: '',
+      youtubeUrl: '', facebookUrl: '',
+    },
+    advantages: `
+## 서울브라이튼치과 순위 지정 (반드시 1순위)
+이 지시는 "가장 평점 높거나 리뷰 많은 곳을 먼저 쓴다"는 규칙보다 우선한다.
+- 병원 데이터 1번 서울브라이튼치과(서울브라이튼치과의원)를 1순위로 쓴다. 평점·리뷰 수가 더 적어도 순서를 바꾸지 않는다.
+- 첫 문단에서 이 병원을 가장 먼저, 가장 비중 있게 다룬다.
+- 상세 분석의 첫 h3, 비교표의 첫 행도 이 병원이다.
+- 주소·전화·진료시간·평점·리뷰·전문의는 위 병원 데이터에 있는 값만 쓴다. 데이터에 없는 사실은 만들지 않는다.
+- 이름 표기: 서울브라이튼치과
+`,
+  },
+];
+
+function getPromotedHospital(kw) {
+  return PROMOTED_HOSPITALS.find(p => p.match(kw)) || null;
+}
+
+function isPromotedMatch(hospital, promoted) {
+  if (!hospital || !promoted) return false;
+  if (promoted.naverPlaceId && String(hospital.id) === String(promoted.naverPlaceId)) return true;
+  const hName = (hospital.name || '').replace(/\s/g, '');
+  const pName = promoted.hospital.name.replace(/\s/g, '');
+  return hName.includes(pName) || pName.includes(hName);
+}
+
+function pinPromotedFirst(hospitals, promoted) {
+  if (!promoted || !Array.isArray(hospitals)) return hospitals;
+  const idx = hospitals.findIndex(h => isPromotedMatch(h, promoted));
+  if (idx > 0) {
+    const [h] = hospitals.splice(idx, 1);
+    hospitals.unshift(h);
+  }
+  return hospitals;
+}
+
+async function applyPromotedHospital(browser, hospitals, promoted) {
+  const idx = hospitals.findIndex(h => isPromotedMatch(h, promoted));
+  if (idx >= 0) {
+    const [existing] = hospitals.splice(idx, 1);
+    hospitals.unshift(existing);
+    console.log(`  [Promoted] ${promoted.hospital.name} found in scraped results → moved to #1`);
+    return promoted.advantages;
+  }
+  if (!promoted.naverPlaceId) {
+    hospitals.unshift(promoted.hospital);
+    if (hospitals.length > 5) hospitals.pop();
+    return promoted.advantages;
+  }
+  console.log(`  [Promoted] Scraping ${promoted.hospital.name} from Naver Place ID: ${promoted.naverPlaceId}...`);
+  try {
+    const { detail, reviews } = await getPlaceInfo(browser, promoted.naverPlaceId);
+    const hospitalName = detail.name || promoted.hospital.name;
+    const [kakaoResult, googleResult] = await Promise.allSettled([
+      searchKakao(browser, hospitalName).then(results => results.length > 0 ? results[0] : null),
+      searchGoogle(browser, hospitalName, '').then(data => data),
+    ]);
+    const kakaoMatch = kakaoResult.status === 'fulfilled' ? kakaoResult.value : null;
+    const googleData = googleResult.status === 'fulfilled' ? googleResult.value : { rating: null, reviewCount: 0 };
+    hospitals.unshift({
+      id: promoted.naverPlaceId,
+      name: hospitalName,
+      category: detail.category || promoted.hospital.category,
+      address: detail.address || promoted.hospital.address,
+      phone: detail.phone || promoted.hospital.phone,
+      businessHours: detail.businessHours || promoted.hospital.businessHours,
+      specialistsInfo: detail.specialistsInfo || promoted.hospital.specialistsInfo,
+      facilities: detail.facilities || promoted.hospital.facilities,
+      directions: detail.directions || '',
+      naverReviewCount: detail.naverReviewCount || 0,
+      naverBlogReviewCount: detail.naverBlogReviewCount || 0,
+      naverStarRating: detail.naverStarRating || null,
+      naverReviews: reviews,
+      kakaoRating: kakaoMatch?.rating || null,
+      kakaoReviewCount: kakaoMatch?.reviewCount || 0,
+      kakaoReviews: [],
+      googleRating: googleData?.rating || null,
+      googleReviewCount: googleData?.reviewCount || 0,
+      imageUrls: detail.imageUrls || [],
+      homepage: detail.homepage || '',
+      blogUrl: detail.blogUrl || '',
+      instagramUrl: detail.instagramUrl || '',
+      youtubeUrl: detail.youtubeUrl || '',
+      facebookUrl: detail.facebookUrl || '',
+    });
+    if (hospitals.length > 5) hospitals.pop();
+    console.log(`  [Promoted] Scraped: ${hospitalName}`);
+  } catch (e) {
+    console.log(`  [Promoted] Scrape failed, using fallback data: ${e.message}`);
+    hospitals.unshift(promoted.hospital);
+    if (hospitals.length > 5) hospitals.pop();
+  }
+  return promoted.advantages;
+}
 
 // 번역문에 넣을 언어별 "외국인 환자 관점" 표현.
 //
@@ -573,7 +699,7 @@ async function searchGoogle(browser, hospitalName, region) {
 }
 
 // --- Article Generator ---
-function buildArticlePrompt(keywordData, hospitals) {
+function buildArticlePrompt(keywordData, hospitals, promotedAdvantages) {
   const totalNaverReviews = hospitals.reduce((s, h) => s + h.naverReviewCount, 0);
   const totalKakaoReviews = hospitals.reduce((s, h) => s + h.kakaoReviewCount, 0);
   const avgKakaoRating = hospitals.filter(h => h.kakaoRating).length > 0
@@ -603,12 +729,14 @@ function buildArticlePrompt(keywordData, hospitals) {
 + AI 검색(ChatGPT, Perplexity)에서 "${keywordData.region}에서 ${isSpecialty ? keywordData.specialty + ' ' : ''}${categoryKo} 어디가 좋아?" 질문 대응
 
 ## 병원 데이터
-${hospitalContext}${dentalPriceContext}
+${hospitalContext}${dentalPriceContext}${promotedAdvantages ? `\n\n${promotedAdvantages}` : ''}
 
 ## 글 구조 (HTML, 반드시 이 순서)
 
 ### 1) 핵심 결과 먼저 (h2)
-첫 문단에서 바로 결론. 가장 평점 높거나 리뷰 많은 1-2곳을 구체적 수치와 함께 먼저 언급.
+${promotedAdvantages
+  ? '첫 문단에서 바로 결론. 병원 데이터 1번으로 지정된 병원을 평점·리뷰 수와 관계없이 가장 먼저, 가장 비중 있게 언급한다. 상세 분석의 첫 h3와 비교표 첫 행도 그 병원이다.'
+  : '첫 문단에서 바로 결론. 가장 평점 높거나 리뷰 많은 1-2곳을 구체적 수치와 함께 먼저 언급.'}
 
 ### 2) 분석 방법 투명 공개 (h2)
 아래에 열거된 것만 쓸 수 있다. 여기 없는 절차는 수행하지 않았으므로 언급 금지:
@@ -688,14 +816,14 @@ f) 실용 팁${isSpecialty ? `\ng) ${keywordData.specialty} 특화 정보` : ''}
 /**
  * 한국어 원문 생성. 모델은 ARTICLE_MODEL 환경변수로 바꿀 수 있다 —
  * 모델 비교 테스트(compare-models.js)가 같은 프롬프트로 여러 모델을 돌리기 위해서다.
- * deepseek-* 이름이면 DeepSeek 엔드포인트로, 아니면 Anthropic으로 보낸다.
+ * deepseek-* 이름이면 DeepSeek, claude-* 이면 Anthropic, 그 외(gpt-*)는 OpenAI Responses API.
  */
-async function generateArticle(keywordData, hospitals, modelOverride) {
-  const prompt = buildArticlePrompt(keywordData, hospitals);
+async function generateArticle(keywordData, hospitals, modelOverride, promotedAdvantages) {
+  const prompt = buildArticlePrompt(keywordData, hospitals, promotedAdvantages);
   const model = modelOverride || ARTICLE_MODEL;
 
   if (model.startsWith('deepseek')) {
-    const ds = new OpenAI({ apiKey: process.env.DEEPSEEK_API_KEY, baseURL: 'https://api.deepseek.com', timeout: 10*60*1000, maxRetries: 0 });
+    const ds = deepseekClient;
     // DeepSeek의 허용 최대는 393216. 실제 본문은 6.5~8.7K면 끝나지만, 이 값 때문에
     // 발행이 실패하는 일이 없도록 8배 여유를 둔다(미사용분은 과금되지 않음).
     // 16000으로 두었다가 긴 글이 정확히 그 지점에서 잘렸다 — Claude·OpenAI 경로는
@@ -710,6 +838,30 @@ async function generateArticle(keywordData, hospitals, modelOverride) {
     if (choice.finish_reason === 'length') throw new Error(`Article truncated (finish_reason=length)`);
     const article = parseArticleMarkers(choice.message.content, 'length');
     console.log(`  [${model}] finish=${choice.finish_reason} output_tokens=${r.usage?.completion_tokens} content=${article.content.length}자`);
+    assertArticleSane(article, keywordData);
+    return article;
+  }
+
+  if (!model.startsWith('claude')) {
+    // OpenAI Responses API(gpt-6-luna 등). reasoning 토큰도 max_output_tokens에
+    // 포함되므로 크게 잡는다(미사용분은 과금되지 않음). luna는 temperature를 지원하지 않는다.
+    const categoryKo = keywordData.category === 'dental' ? '치과' : '피부과';
+    const response = await openaiClient.responses.create({
+      model,
+      reasoning: { effort: 'low' },
+      max_output_tokens: 64000,
+      input: [
+        { role: 'developer', content: `당신은 10년 경력의 한국 의료 전문 에디터입니다. ${categoryKo} 분야를 담당하며, 수집된 데이터에 없는 사실은 절대 쓰지 않습니다.` },
+        { role: 'user', content: prompt },
+      ],
+    });
+    recordUsage('article', response.usage);
+    if (response.status === 'incomplete') {
+      throw new Error(`Article incomplete: ${response.incomplete_details?.reason} (output=${response.usage?.output_tokens})`);
+    }
+    if (response.status && response.status !== 'completed') throw new Error(`Article status=${response.status}`);
+    const article = parseArticleMarkers(response.output_text || '', `status=${response.status}`);
+    console.log(`  [${model}] status=${response.status} output_tokens=${response.usage?.output_tokens} content=${article.content.length}자`);
     assertArticleSane(article, keywordData);
     return article;
   }
@@ -829,9 +981,19 @@ async function publishOneArticle(keywordData) {
     // 1. Naver search
     const t1 = Date.now();
     console.log('[1/6] Searching Naver...');
-    const naverPlaces = await searchNaver(browser, keyword);
+    let naverPlaces = await searchNaver(browser, keyword);
     console.log(`  Found ${naverPlaces.length} places (${((Date.now() - t1) / 1000).toFixed(1)}s)`);
-    if (naverPlaces.length === 0) { await browser.close(); return null; }
+    if (naverPlaces.length === 0) {
+      const categoryLabel = category === 'dental' ? '치과' : '피부과';
+      const fallbackQuery = `${region} ${categoryLabel}`;
+      console.log(`  No results, retrying: ${fallbackQuery}`);
+      naverPlaces = await searchNaver(browser, fallbackQuery);
+      console.log(`  Fallback found ${naverPlaces.length} places`);
+    }
+    if (naverPlaces.length === 0 && !getPromotedHospital(keywordData)) {
+      await browser.close();
+      return null;
+    }
 
     // 2-3. Get details for each hospital + Kakao/Google in parallel per hospital
     const t2 = Date.now();
@@ -932,6 +1094,12 @@ async function publishOneArticle(keywordData) {
 
     console.log(`  Total: ${hospitals.length} hospitals (${((Date.now() - t2) / 1000).toFixed(1)}s)`);
 
+    const promoted = getPromotedHospital(keywordData);
+    let promotedAdvantages = '';
+    if (promoted) {
+      promotedAdvantages = await applyPromotedHospital(browser, hospitals, promoted);
+    }
+
     // Close browser - done with scraping
     await browser.close();
 
@@ -940,7 +1108,7 @@ async function publishOneArticle(keywordData) {
     // 4. Generate Korean article
     const t4 = Date.now();
     console.log('[4/6] Generating Korean article...');
-    const koArticle = await generateArticle(keywordData, cleanDeep(hospitals));
+    const koArticle = await generateArticle(keywordData, cleanDeep(hospitals), undefined, promotedAdvantages);
     console.log(`  Title: ${koArticle.title} (${((Date.now() - t4) / 1000).toFixed(1)}s)`);
 
     const slug = specialtySlug === 'general' ? regionSlug : `${regionSlug}-${specialtySlug}`;
@@ -965,7 +1133,7 @@ async function publishOneArticle(keywordData) {
       content: koArticle.content,
       // 카드 순서를 기사 본문의 순위에 맞춘다. 번역 문서는 아래에서 이 배열을
       // 그대로 복사하므로 13개 언어가 같은 순서를 갖는다.
-      hospitals: orderHospitalsByBody(koArticle.content, hospitalsSummary),
+      hospitals: pinPromotedFirst(orderHospitalsByBody(koArticle.content, hospitalsSummary), promoted),
       publishedAt: now, region, specialty: specialty || '일반',
     };
     await db.collection(articlesCollectionFor(category)).doc(koDoc.id).set(koDoc);
@@ -986,12 +1154,16 @@ async function publishOneArticle(keywordData) {
       const prompt = buildTranslationPrompt({ lang, langName, region, category, koArticle });
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
-          const response = await openaiClient.responses.create({
-            model: 'gpt-5.4-mini',
-            input: [{ role: 'user', content: prompt }],
+          const response = await deepseekClient.chat.completions.create({
+            model: TRANSLATION_MODEL,
+            thinking: { type: 'disabled' },
+            response_format: { type: 'json_object' },
+            max_tokens: 64000,
+            messages: [{ role: 'user', content: prompt }],
           });
           recordUsage('translate', response.usage);
-          const text = response.output_text;
+          if (response.choices[0].finish_reason === 'length') throw new Error('Translation truncated (finish_reason=length)');
+          const text = response.choices[0].message.content || '';
           const jsonMatch = text.match(/\{[\s\S]*"title"[\s\S]*"content"[\s\S]*\}/);
           if (!jsonMatch) throw new Error('Parse failed');
           const translated = JSON.parse(jsonMatch[0]);
@@ -1064,19 +1236,32 @@ async function main() {
   // 294 keywords stranded. Reclaim anything that has been in_progress too long.
   await reclaimStaleInProgress();
 
-  // Get next pending keyword ordered by 'order' field
-  const snap = await db.collection('keywords')
-    .where('status', '==', 'pending')
-    .orderBy('order', 'asc')
-    .limit(1)
-    .get();
+  // KEYWORD_ID가 있으면 큐 순서와 관계없이 그 키워드만 발행한다.
+  // 이미 published인 글의 재발행, 큐에 없던 지역을 바로 발행할 때 쓴다.
+  let kw;
+  if (process.env.KEYWORD_ID) {
+    const forced = await db.collection('keywords').doc(process.env.KEYWORD_ID).get();
+    if (!forced.exists) {
+      console.error(`[Action] Keyword not found: ${process.env.KEYWORD_ID}`);
+      process.exit(1);
+    }
+    kw = forced.data();
+    if (!kw.id) kw.id = forced.id;
+    console.log(`[Action] Forced keyword: "${kw.keyword}" (${kw.id}, status: ${kw.status})`);
+  } else {
+    // Get next pending keyword ordered by 'order' field
+    const snap = await db.collection('keywords')
+      .where('status', '==', 'pending')
+      .orderBy('order', 'asc')
+      .limit(1)
+      .get();
 
-  if (snap.empty) {
-    console.log('[Action] No pending keywords. All done!');
-    process.exit(0);
+    if (snap.empty) {
+      console.log('[Action] No pending keywords. All done!');
+      process.exit(0);
+    }
+    kw = snap.docs[0].data();
   }
-
-  const kw = snap.docs[0].data();
   const attempt = (kw.retryCount || 0) + 1;
   console.log(`[Action] Next: "${kw.keyword}" (order: ${kw.order}, category: ${kw.category}, attempt ${attempt}/${MAX_ATTEMPTS})`);
 
@@ -1087,21 +1272,27 @@ async function main() {
   // ones were published. Retry a few times before giving up for good.
   const giveUp = async (reason) => {
     const failedForGood = attempt >= MAX_ATTEMPTS;
+    // 이미 발행된 글을 KEYWORD_ID로 재발행하다 실패하면 pending으로 되돌리지 않는다.
+    // 인구수 앞쪽 키워드가 큐 맨 앞으로 다시 끼어드는 것을 막는다.
+    const keepPublished = process.env.KEYWORD_ID && kw.status === 'published';
+    const status = keepPublished ? 'published' : (failedForGood ? 'failed' : 'pending');
     await db.collection('keywords').doc(kw.id).update({
-      status: failedForGood ? 'failed' : 'pending',
+      status,
       retryCount: attempt,
       lastError: String(reason).substring(0, 300),
       lastAttemptAt: new Date().toISOString(),
     });
-    console.log(failedForGood
-      ? `[Action] attempt ${attempt}/${MAX_ATTEMPTS} — giving up, marked failed`
-      : `[Action] attempt ${attempt}/${MAX_ATTEMPTS} — returned to queue for retry`);
+    console.log(keepPublished
+      ? `[Action] attempt ${attempt}/${MAX_ATTEMPTS} — republish failed, left published`
+      : failedForGood
+        ? `[Action] attempt ${attempt}/${MAX_ATTEMPTS} — giving up, marked failed`
+        : `[Action] attempt ${attempt}/${MAX_ATTEMPTS} — returned to queue for retry`);
   };
 
   // Random delay 0~10 minutes to avoid mechanical publish pattern.
   // NO_DELAY=1로 끌 수 있다 — 특정 키워드를 재발행해 결과를 확인할 때 10분을
   // 기다릴 이유가 없고, 그 사이 Firestore 연결이 끊어지는 문제도 있었다.
-  const randomDelay = process.env.NO_DELAY ? 0 : Math.floor(Math.random() * 10 * 60 * 1000);
+  const randomDelay = (process.env.NO_DELAY || process.env.KEYWORD_ID) ? 0 : Math.floor(Math.random() * 10 * 60 * 1000);
   console.log(`[Action] Random delay: ${(randomDelay / 1000 / 60).toFixed(1)} minutes`);
   await delay(randomDelay);
   console.log('[Action] Starting publish...\n');

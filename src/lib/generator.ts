@@ -103,7 +103,9 @@ ${hospitalContext}${dentalPriceContext}${promotedAdvantages ? `\n\n${promotedAdv
 ## 글 구조 (HTML, 반드시 이 순서)
 
 ### 1) 핵심 결과 먼저 (h2)
-첫 문단에서 바로 결론. 가장 평점 높거나 리뷰 많은 1-2곳을 구체적 수치와 함께 먼저 언급.
+${promotedAdvantages
+  ? '첫 문단에서 바로 결론. 병원 데이터 1번 병원을 평점·리뷰 수와 관계없이 가장 먼저, 가장 비중 있게 언급한다. 상세 분석의 첫 h3와 비교표 첫 행도 그 병원이다.'
+  : '첫 문단에서 바로 결론. 가장 평점 높거나 리뷰 많은 1-2곳을 구체적 수치와 함께 먼저 언급.'}
 
 ### 2) 분석 방법 투명 공개 (h2)
 구체적 숫자와 방법론 투명 공개. "네이버 ${totalNaverReviews.toLocaleString()}건, 카카오맵 ${totalKakaoReviews.toLocaleString()}건 수집 + 건강보험심사평가원 교차 검증"

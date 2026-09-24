@@ -23,7 +23,8 @@ Medical Korea Guide is an automated multilingual SEO content platform for Korean
 keywords.ts (9,025 region × specialty combinations, ordered by population)
     → scraper.ts (Puppeteer: Naver Place + KakaoMap + Google Maps)
     → matcher.ts (GPT-5.4-mini: cross-platform hospital name/address matching)
-    → generator.ts (claude-sonnet-5: Korean article → GPT-5.4-mini: 12 language translations)
+    → generator.ts (Vercel backup path, still claude-sonnet-5 → GPT-5.4-mini)
+    → publish-action.js (the real GitHub Actions path: gpt-6-luna Korean article → deepseek-flash (DeepSeek-V4.1-Flash) 12 language translations, since 2026-09-24)
     → publish.ts (orchestrator: queue management + Firestore save)
 ```
 
