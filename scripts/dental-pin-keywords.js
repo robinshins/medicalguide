@@ -75,6 +75,7 @@ function cross(prefix, regions, specs) {
  * @param {'dental' | 'dental2'} prefix
  * medicalkoreaguide는 브라이튼 기존 5개 지역의 기존 6진료를 다시 당기지 않는다.
  * dental2는 그 글에도 1순위가 없어서 전부 당긴다.
+ * 발행 순서는 이백점, 브라이튼을 한 편씩 번갈아 둔다. 짧은 쪽이 끝나면 나머지만 이어진다.
  */
 function buildPinKeywords(prefix) {
   const ibaek = cross(prefix, IBAEK_REGIONS, IBAEK_SPECS);
@@ -88,7 +89,17 @@ function buildPinKeywords(prefix) {
     const nokcheon = cross(prefix, [NOKCHEON], [...OLD_SPECS, ...NEW_SPECS]);
     brighton = [...nowonOld, ...addedSpecs, ...nokcheon];
   }
-  return [...ibaek, ...brighton];
+  return interleave(ibaek, brighton);
+}
+
+function interleave(a, b) {
+  const out = [];
+  const n = Math.max(a.length, b.length);
+  for (let i = 0; i < n; i++) {
+    if (i < a.length) out.push(a[i]);
+    if (i < b.length) out.push(b[i]);
+  }
+  return out;
 }
 
 module.exports = { buildPinKeywords };
