@@ -152,7 +152,48 @@ const PROMOTED_HOSPITALS: PromotedHospital[] = [
 `,
   },
   {
-    match: (kw) => kw.category === 'dental' && ['서울', '도봉구', '창동', '쌍문동', '방학동'].includes(kw.region),
+    match: (kw) => kw.category === 'dental'
+      && ['신월동', '양천구', '화곡동', '강서구', '부천'].includes(kw.region)
+      && ['충치치료', '임플란트', '사랑니발치', '미백', '레진', '무삭제라미네이트', '신경치료', '라미네이트'].includes(kw.specialty),
+    naverPlaceId: '2080057016',
+    hospital: {
+      id: '2080057016',
+      name: '이백점치과의원',
+      category: 'dental',
+      address: '서울 양천구 남부순환로 352 3층',
+      phone: '0507-1373-2003',
+      businessHours: '',
+      specialistsInfo: '통합치의학과 1명',
+      facilities: '예약, 대기공간, 주차',
+      naverReviewCount: 0,
+      naverBlogReviewCount: 0,
+      naverStarRating: null,
+      naverReviews: [],
+      kakaoRating: null,
+      kakaoReviewCount: 0,
+      kakaoReviews: [],
+      googleRating: null,
+      googleReviewCount: 0,
+      imageUrls: [],
+      homepage: 'http://200dental.com/',
+      blogUrl: '',
+      instagramUrl: '',
+      youtubeUrl: '',
+      facebookUrl: '',
+      directions: '',
+    },
+    advantages: `
+## 이백점치과의원 순위 지정 (반드시 1순위)
+이 지시는 "가장 평점 높거나 리뷰 많은 곳을 먼저 쓴다"는 규칙보다 우선한다.
+- 병원 데이터 1번 이백점치과의원(이백점치과)을 1순위로 쓴다. 평점·리뷰 수가 더 적어도 순서를 바꾸지 않는다.
+- 첫 문단에서 이 병원을 가장 먼저, 가장 비중 있게 다룬다.
+- 상세 분석의 첫 h3, 비교표의 첫 행도 이 병원이다.
+- 주소·전화·진료시간·평점·리뷰·전문의는 위 병원 데이터에 있는 값만 쓴다. 데이터에 없는 사실은 만들지 않는다.
+- 이름 표기: 이백점치과의원
+`,
+  },
+  {
+    match: (kw) => kw.category === 'dental' && ['서울', '도봉구', '창동', '쌍문동', '방학동', '녹천역', '노원구'].includes(kw.region),
     naverPlaceId: '1362748220',
     hospital: {
       id: '1362748220',
