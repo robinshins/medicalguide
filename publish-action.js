@@ -457,6 +457,10 @@ async function searchNaver(browser, query) {
   await page.setUserAgent(UA);
   await page.goto(`https://m.search.naver.com/search.naver?query=${encodeURIComponent(query)}&where=place`, { waitUntil: 'networkidle2', timeout: 30000 });
   await delay(1500);
+  for (let s = 0; s < 3; s++) {
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await delay(400);
+  }
   const places = await page.evaluate(() => {
     const root = document.querySelector('#place-app-root');
     if (!root) return [];
@@ -476,7 +480,7 @@ async function searchNaver(browser, query) {
       seen.add(match[1]);
       results.push({ id: match[1], name });
     }
-    return results.slice(0, 5);
+    return results.slice(0, 15);
   });
   await page.close();
   return places;
@@ -986,6 +990,47 @@ function assertArticleSane(a, keywordData) {
   }
 }
 
+function pickRecommended(pool, specialty, siblingTopIds) {
+  const token = specialty && specialty !== '일반' ? specialty : '';
+  const hasAlternative = pool.some(h => !siblingTopIds.has(h.id));
+  return pool
+    .map((h, index) => {
+      const text = `${h.name} ${h.category || ''} ${h.specialistsInfo || ''}`;
+      return {
+        h,
+        index,
+        pushed: hasAlternative && siblingTopIds.has(h.id) ? 1 : 0,
+        specialtyMatch: token && text.includes(token) ? 0 : 1,
+      };
+    })
+    .sort((a, b) => a.pushed - b.pushed || a.specialtyMatch - b.specialtyMatch || a.index - b.index)
+    .slice(0, 5)
+    .map(row => row.h);
+}
+
+async function siblingTopIds(collection, region, specialty, category) {
+  try {
+    const snap = await db.collection(collection)
+      .where('region', '==', region)
+      .select('specialty', 'hospitals', 'lang', 'category')
+      .get();
+    const ids = new Set();
+    for (const doc of snap.docs) {
+      const data = doc.data();
+      if (data.lang && data.lang !== 'ko') continue;
+      if (category && data.category && data.category !== category) continue;
+      if ((data.specialty || '일반') === (specialty || '일반') || !Array.isArray(data.hospitals)) continue;
+      for (const h of data.hospitals.slice(0, 3)) {
+        if (h?.id) ids.add(String(h.id));
+      }
+    }
+    return ids;
+  } catch (e) {
+    console.log(`  [rank] sibling lookup failed: ${e.message}`);
+    return new Set();
+  }
+}
+
 // ============================================================
 // FULL PIPELINE - SINGLE BROWSER INSTANCE
 // ============================================================
@@ -1008,14 +1053,25 @@ async function publishOneArticle(keywordData) {
     console.log('[1/6] Searching Naver...');
     let naverPlaces = await searchNaver(browser, keyword);
     console.log(`  Found ${naverPlaces.length} places (${((Date.now() - t1) / 1000).toFixed(1)}s)`);
-    if (naverPlaces.length === 0) {
+    const queue = [];
+    const seenIds = new Set();
+    const enqueue = (list) => {
+      for (const p of list) {
+        if (seenIds.has(p.id) || queue.length >= 15) continue;
+        seenIds.add(p.id);
+        queue.push(p);
+      }
+    };
+    enqueue(naverPlaces);
+    if (queue.length < 3 && specialty && specialty !== '일반') {
       const categoryLabel = category === 'dental' ? '치과' : '피부과';
       const fallbackQuery = `${region} ${categoryLabel}`;
-      console.log(`  No results, retrying: ${fallbackQuery}`);
-      naverPlaces = await searchNaver(browser, fallbackQuery);
-      console.log(`  Fallback found ${naverPlaces.length} places`);
+      if (fallbackQuery !== keyword) {
+        console.log(`  [rank] search ${queue.length} < 3, fallback "${fallbackQuery}"`);
+        enqueue(await searchNaver(browser, fallbackQuery));
+      }
     }
-    if (naverPlaces.length === 0 && !getPromotedHospital(keywordData)) {
+    if (queue.length === 0 && !getPromotedHospital(keywordData)) {
       await browser.close();
       return null;
     }
@@ -1025,7 +1081,8 @@ async function publishOneArticle(keywordData) {
     console.log('[2/6] Getting hospital details (Naver + Kakao + Google parallel)...');
     const hospitals = [];
     const pendingKakaoMatches = []; // {hospitalName, address, phone, placeId, candidates}
-    for (const place of naverPlaces.slice(0, 5)) {
+    for (const place of queue) {
+      if (hospitals.length >= 15) break;
       try {
         await delay(1500);
         console.log(`  ${place.name}...`);
@@ -1118,6 +1175,11 @@ async function publishOneArticle(keywordData) {
     }
 
     console.log(`  Total: ${hospitals.length} hospitals (${((Date.now() - t2) / 1000).toFixed(1)}s)`);
+
+    const siblingIds = await siblingTopIds(articlesCollectionFor(category), region, specialty || '일반', category);
+    const picked = pickRecommended(hospitals, specialty || '', siblingIds);
+    hospitals.splice(0, hospitals.length, ...picked);
+    console.log(`  [rank] ${picked.map(h => h.name).join(' / ')}`);
 
     const promoted = getPromotedHospital(keywordData);
     let promotedAdvantages = '';
