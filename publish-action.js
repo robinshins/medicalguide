@@ -93,6 +93,30 @@ const TRANSLATION_MODEL = 'deepseek-flash';
 // 스크랩 상위 5곳에 없으면 naverPlaceId로 직접 수집해 맨 앞에 넣는다.
 const PROMOTED_HOSPITALS = [
   {
+    match: (kw) => kw.category === 'dental' && ['부산', '남구', '대연동'].includes(kw.region),
+    naverPlaceId: '1201116357',
+    hospital: {
+      id: '1201116357', name: '메디스치과의원 경성대', category: 'dental',
+      address: '부산 남구 수영로 276 2층', phone: '',
+      businessHours: '', specialistsInfo: '통합치의학과 전문의 1명, 치주과 전문의 1명, 치과보존과 전문의 1명',
+      facilities: '', directions: '',
+      naverReviewCount: 0, naverBlogReviewCount: 0, naverStarRating: null, naverReviews: [],
+      kakaoRating: null, kakaoReviewCount: 0, kakaoReviews: [],
+      googleRating: null, googleReviewCount: 0,
+      imageUrls: [], homepage: '', blogUrl: '', instagramUrl: '',
+      youtubeUrl: '', facebookUrl: '',
+    },
+    advantages: `
+## 메디스치과의원 경성대 순위 지정 (반드시 1순위)
+이 지시는 "가장 평점 높거나 리뷰 많은 곳을 먼저 쓴다"는 규칙보다 우선한다.
+- 병원 데이터 1번 메디스치과의원 경성대(메디스치과)를 1순위로 쓴다. 평점·리뷰 수가 더 적어도 순서를 바꾸지 않는다.
+- 첫 문단에서 이 병원을 가장 먼저, 가장 비중 있게 다룬다.
+- 상세 분석의 첫 h3, 비교표의 첫 행도 이 병원이다.
+- 주소·전화·진료시간·평점·리뷰·전문의는 위 병원 데이터에 있는 값만 쓴다. 데이터에 없는 사실은 만들지 않는다.
+- 이름 표기: 메디스치과의원 경성대
+`,
+  },
+  {
     match: (kw) => kw.category === 'dental'
       && ['신월동', '양천구', '화곡동', '강서구', '부천'].includes(kw.region)
       && ['충치치료', '임플란트', '사랑니발치', '미백', '레진', '무삭제라미네이트', '신경치료', '라미네이트'].includes(kw.specialty),
@@ -1200,6 +1224,9 @@ async function publishOneArticle(keywordData) {
 
     const slug = specialtySlug === 'general' ? regionSlug : `${regionSlug}-${specialtySlug}`;
     const now = new Date().toISOString();
+    const existingKo = await db.collection(articlesCollectionFor(category)).doc(`${category}-${slug}-ko`).get();
+    const publishedAt = existingKo.exists && existingKo.data().publishedAt ? existingKo.data().publishedAt : now;
+    if (publishedAt !== now) console.log(`  [date] keep publishedAt ${publishedAt}`);
 
     const hospitalsSummary = hospitals.map(h => ({
       id: h.id, name: h.name, address: h.address, phone: h.phone,
@@ -1221,7 +1248,7 @@ async function publishOneArticle(keywordData) {
       // 카드 순서를 기사 본문의 순위에 맞춘다. 번역 문서는 아래에서 이 배열을
       // 그대로 복사하므로 13개 언어가 같은 순서를 갖는다.
       hospitals: pinPromotedFirst(orderHospitalsByBody(koArticle.content, hospitalsSummary), promoted),
-      publishedAt: now, region, specialty: specialty || '일반',
+      publishedAt, region, specialty: specialty || '일반',
     };
     await db.collection(articlesCollectionFor(category)).doc(koDoc.id).set(koDoc);
     try { await upsertArticleIndex(koDoc); } catch (e) { console.log('  Index update failed (ko):', e.message); }
@@ -1278,12 +1305,17 @@ async function publishOneArticle(keywordData) {
     const fail = results.filter(r => r.status === 'rejected').length;
     console.log(`  Done: ${ok} ok, ${fail} failed (${((Date.now() - t6) / 1000).toFixed(1)}s)`);
 
-    // IndexNow streaming: notify search engines immediately for this article's URLs
-    const langCodes = Object.keys(langMap);
-    const succeededLangs = ['ko', ...langCodes.filter((_, i) => results[i].status === 'fulfilled')];
-    const indexNowUrls = succeededLangs.map(lang => `${INDEXNOW_SITE_URL}/${lang}/${category}/${slug}`);
-    console.log(`[IndexNow] Submitting ${indexNowUrls.length} URLs...`);
-    await submitToIndexNow(indexNowUrls);
+    // 이미 있던 글을 다시 쓸 때는 IndexNow로 수정 신호를 보내지 않는다.
+    // 화면 날짜·사이트맵 lastmod도 기존 publishedAt을 유지한다.
+    if (publishedAt === now) {
+      const langCodes = Object.keys(langMap);
+      const succeededLangs = ['ko', ...langCodes.filter((_, i) => results[i].status === 'fulfilled')];
+      const indexNowUrls = succeededLangs.map(lang => `${INDEXNOW_SITE_URL}/${lang}/${category}/${slug}`);
+      console.log(`[IndexNow] Submitting ${indexNowUrls.length} URLs...`);
+      await submitToIndexNow(indexNowUrls);
+    } else {
+      console.log('[IndexNow] skip rewrite');
+    }
 
     // retryCount/lastError are carried in keywordData; clear them so a keyword that
     // succeeded after a retry starts clean if it is ever re-published.

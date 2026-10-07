@@ -1,6 +1,7 @@
 /**
- * 이백점·브라이튼 큐 대상 키워드.
+ * 이백점·브라이튼·경성대 메디스 큐 대상 키워드.
  * medicalkoreaguide id 접두사는 dental, medguide-dental2는 dental2.
+ * 메디스는 koreadentalinfo(dental)만. 부산·남구·대연동에 실제로 있는 일반·임플란트·전체임플란트.
  */
 
 const IBAEK_REGIONS = [
@@ -41,6 +42,18 @@ const OLD_SPECS = [
   { name: '충치치료', slug: 'cavity' },
 ];
 
+const MEDIS_REGIONS = [
+  { name: '부산', slug: 'busan' },
+  { name: '남구', slug: 'nam-gu' },
+  { name: '대연동', slug: 'daeyeon' },
+];
+
+const MEDIS_SPECS = [
+  { name: '', slug: '' },
+  { name: '임플란트', slug: 'implant' },
+  { name: '전체임플란트', slug: 'full-implant' },
+];
+
 const NEW_SPECS = [
   { name: '미백', slug: 'whitening' },
   { name: '레진', slug: 'resin' },
@@ -75,7 +88,8 @@ function cross(prefix, regions, specs) {
  * @param {'dental' | 'dental2'} prefix
  * medicalkoreaguide는 브라이튼 기존 5개 지역의 기존 6진료를 다시 당기지 않는다.
  * dental2는 그 글에도 1순위가 없어서 전부 당긴다.
- * 발행 순서는 이백점, 브라이튼을 한 편씩 번갈아 둔다. 짧은 쪽이 끝나면 나머지만 이어진다.
+ * 발행 순서는 이백점, 브라이튼, 메디스를 한 편씩 번갈아 둔다. 짧은 쪽이 끝나면 나머지만 이어진다.
+ * dental2에는 메디스가 없다.
  */
 function buildPinKeywords(prefix) {
   const ibaek = cross(prefix, IBAEK_REGIONS, IBAEK_SPECS);
@@ -89,15 +103,17 @@ function buildPinKeywords(prefix) {
     const nokcheon = cross(prefix, [NOKCHEON], [...OLD_SPECS, ...NEW_SPECS]);
     brighton = [...nowonOld, ...addedSpecs, ...nokcheon];
   }
-  return interleave(ibaek, brighton);
+  const medis = prefix === 'dental' ? cross(prefix, MEDIS_REGIONS, MEDIS_SPECS) : [];
+  return interleave3(ibaek, brighton, medis);
 }
 
-function interleave(a, b) {
+function interleave3(a, b, c) {
   const out = [];
-  const n = Math.max(a.length, b.length);
+  const n = Math.max(a.length, b.length, c.length);
   for (let i = 0; i < n; i++) {
     if (i < a.length) out.push(a[i]);
     if (i < b.length) out.push(b[i]);
+    if (i < c.length) out.push(c[i]);
   }
   return out;
 }

@@ -1,5 +1,6 @@
 /**
- * 이백점·브라이튼 키워드를 keywords 큐 맨 앞에 둔다.
+ * 이백점·브라이튼·메디스 키워드를 keywords 큐 맨 앞에 둔다.
+ * 이미 발행된 이백점·브라이튼은 그대로 둔다. 메디스(부산·남구·대연동)만 재발행으로 되돌린다.
  *
  *   node scripts/bump-dental-pins.js
  *   node scripts/bump-dental-pins.js --apply
@@ -28,7 +29,8 @@ async function main() {
     if (typeof o === 'number' && o < minOrder) minOrder = o;
   });
   const start = minOrder - keywords.length;
-  const counts = { create: 0, requeue: 0, reorderPending: 0, skipInProgress: 0 };
+  const MEDIS_REGIONS = new Set(['부산', '남구', '대연동']);
+  const counts = { create: 0, requeue: 0, reorderPending: 0, skipInProgress: 0, skipPublished: 0 };
   const batch = db.batch();
   let writes = 0;
 
@@ -52,8 +54,14 @@ async function main() {
       console.log(`SKIP    in_progress  ${kw.keyword}  (${kw.id})`);
       continue;
     }
-    const nextStatus = (data.status === 'published' || data.status === 'failed') ? 'pending' : data.status;
-    if (data.status === 'published' || data.status === 'failed') counts.requeue++;
+    const requeue = (data.status === 'published' || data.status === 'failed') && MEDIS_REGIONS.has(kw.region);
+    if ((data.status === 'published' || data.status === 'failed') && !requeue) {
+      counts.skipPublished++;
+      console.log(`SKIP    already ${data.status}  ${kw.keyword}`);
+      continue;
+    }
+    const nextStatus = requeue ? 'pending' : data.status;
+    if (requeue) counts.requeue++;
     else counts.reorderPending++;
     console.log(`UPDATE  ${data.status} → ${nextStatus}  order ${data.order} → ${order}  ${kw.keyword}`);
     if (APPLY) {
@@ -69,7 +77,7 @@ async function main() {
   if (APPLY && writes > 0) await batch.commit();
   console.log('');
   console.log(APPLY ? '반영함' : '조회만 (반영하려면 --apply)');
-  console.log(`새로 만듦 ${counts.create} · 재발행으로 되돌림 ${counts.requeue} · 대기 중 순서만 변경 ${counts.reorderPending} · 발행 중이라 건너뜀 ${counts.skipInProgress}`);
+  console.log(`새로 만듦 ${counts.create} · 재발행으로 되돌림 ${counts.requeue} · 대기 중 순서만 변경 ${counts.reorderPending} · 이미 발행돼 유지 ${counts.skipPublished} · 발행 중이라 건너뜀 ${counts.skipInProgress}`);
 }
 
 main().catch(e => {
