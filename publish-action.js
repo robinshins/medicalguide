@@ -164,6 +164,78 @@ const PROMOTED_HOSPITALS = [
 - 이름 표기: 서울브라이튼치과
 `,
   },
+  {
+    match: (kw) => kw.category === 'dental' && ['평택', '평택고덕', '고덕동'].includes(kw.region),
+    naverPlaceId: '1364641744',
+    hospital: {
+      id: '1364641744', name: '고덕퍼스트치과의원', category: 'dental',
+      address: '경기 평택시 고덕로 250 에듀스카이 4층', phone: '031-611-3222',
+      businessHours: '', specialistsInfo: '통합치의학과 전문의 1명',
+      facilities: '', directions: '',
+      naverReviewCount: 0, naverBlogReviewCount: 0, naverStarRating: null, naverReviews: [],
+      kakaoRating: null, kakaoReviewCount: 0, kakaoReviews: [],
+      googleRating: null, googleReviewCount: 0,
+      imageUrls: [], homepage: '', blogUrl: '', instagramUrl: '',
+      youtubeUrl: '', facebookUrl: '',
+    },
+    advantages: `
+## 고덕퍼스트치과의원 순위 지정 (반드시 1순위)
+이 지시는 "가장 평점 높거나 리뷰 많은 곳을 먼저 쓴다"는 규칙보다 우선한다.
+- 병원 데이터 1번 고덕퍼스트치과의원(고덕퍼스트치과)를 1순위로 쓴다. 평점·리뷰 수가 더 적어도 순서를 바꾸지 않는다.
+- 첫 문단에서 이 병원을 가장 먼저, 가장 비중 있게 다룬다.
+- 상세 분석의 첫 h3, 비교표의 첫 행도 이 병원이다.
+- 주소·전화·진료시간·평점·리뷰·전문의는 위 병원 데이터에 있는 값만 쓴다. 데이터에 없는 사실은 만들지 않는다.
+- 이름 표기: 고덕퍼스트치과의원
+`,
+  },
+  {
+    match: (kw) => kw.category === 'dental' && ['송파구', '가락동'].includes(kw.region),
+    naverPlaceId: '1709701276',
+    hospital: {
+      id: '1709701276', name: '서울권치과의원', category: 'dental',
+      address: '서울 송파구 오금로 420 3층', phone: '02-6952-2788',
+      businessHours: '', specialistsInfo: '구강악안면외과 전문의 1명, 통합치의학과 전문의 1명',
+      facilities: '', directions: '',
+      naverReviewCount: 0, naverBlogReviewCount: 0, naverStarRating: null, naverReviews: [],
+      kakaoRating: null, kakaoReviewCount: 0, kakaoReviews: [],
+      googleRating: null, googleReviewCount: 0,
+      imageUrls: [], homepage: '', blogUrl: '', instagramUrl: '',
+      youtubeUrl: '', facebookUrl: '',
+    },
+    advantages: `
+## 서울권치과의원 순위 지정 (반드시 1순위)
+이 지시는 "가장 평점 높거나 리뷰 많은 곳을 먼저 쓴다"는 규칙보다 우선한다.
+- 병원 데이터 1번 서울권치과의원(서울권치과)를 1순위로 쓴다. 평점·리뷰 수가 더 적어도 순서를 바꾸지 않는다.
+- 첫 문단에서 이 병원을 가장 먼저, 가장 비중 있게 다룬다.
+- 상세 분석의 첫 h3, 비교표의 첫 행도 이 병원이다.
+- 주소·전화·진료시간·평점·리뷰·전문의는 위 병원 데이터에 있는 값만 쓴다. 데이터에 없는 사실은 만들지 않는다.
+- 이름 표기: 서울권치과의원
+`,
+  },
+  {
+    match: (kw) => kw.category === 'dental' && ['용인', '용인시', '기흥구', '마북동'].includes(kw.region),
+    naverPlaceId: '2056524469',
+    hospital: {
+      id: '2056524469', name: '연세온아치과병원', category: 'dental',
+      address: '경기 용인시 처인구 중부대로 1186', phone: '',
+      businessHours: '', specialistsInfo: '치과보철과 전문의 1명, 통합치의학과 전문의 3명, 치과교정과 전문의 1명',
+      facilities: '', directions: '',
+      naverReviewCount: 0, naverBlogReviewCount: 0, naverStarRating: null, naverReviews: [],
+      kakaoRating: null, kakaoReviewCount: 0, kakaoReviews: [],
+      googleRating: null, googleReviewCount: 0,
+      imageUrls: [], homepage: '', blogUrl: '', instagramUrl: '',
+      youtubeUrl: '', facebookUrl: '',
+    },
+    advantages: `
+## 연세온아치과병원 순위 지정 (반드시 1순위)
+이 지시는 "가장 평점 높거나 리뷰 많은 곳을 먼저 쓴다"는 규칙보다 우선한다.
+- 병원 데이터 1번 연세온아치과병원(연세온아치과)를 1순위로 쓴다. 평점·리뷰 수가 더 적어도 순서를 바꾸지 않는다.
+- 첫 문단에서 이 병원을 가장 먼저, 가장 비중 있게 다룬다.
+- 상세 분석의 첫 h3, 비교표의 첫 행도 이 병원이다.
+- 주소·전화·진료시간·평점·리뷰·전문의는 위 병원 데이터에 있는 값만 쓴다. 데이터에 없는 사실은 만들지 않는다.
+- 이름 표기: 연세온아치과병원
+`,
+  },
 ];
 
 function getPromotedHospital(kw) {
