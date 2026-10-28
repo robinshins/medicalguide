@@ -6,12 +6,13 @@ on:
   # exposure dropped; resuming at a lower cadence to limit risk while the
   # content-quality effect is observed.
   schedule:
-    # 2026-10-02에 2회 → 4회. 지정 병원 글을 앞에 둔 큐를 비우기 위한 속도다.
-    # 네 편을 하루 안에 흩어 한 시각에 몰리지 않게 하고, 분 단위도 정각을 피한다.
+    # 2026-10-02에 2회 → 4회, 2026-10-28에 5회. 지정 병원 글을 앞에 둔 큐를 비우기 위한 속도다.
+    # 다섯 편을 하루 안에 흩어 한 시각에 몰리지 않게 하고, 분 단위도 정각을 피한다.
     # 다른 치과 사이트(dental2)와 같은 시·분에 네이버를 긁지 않도록 시각을 어긋나게 둔다.
     # 번역은 그대로 12개 언어다. 워크플로 시작 후 0~4분, 스크립트 안에서 0~10분이 더 흔들린다.
     - cron: '41 23 * * *'  # KST 08:41
     - cron: '16 3 * * *'   # KST 12:16
+    - cron: '34 5 * * *'   # KST 14:34
     - cron: '52 7 * * *'   # KST 16:52
     - cron: '27 11 * * *'  # KST 20:27
   workflow_dispatch: # Manual trigger
