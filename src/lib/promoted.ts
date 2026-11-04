@@ -171,7 +171,7 @@ const PROMOTED_HOSPITALS: PromotedHospital[] = [
 `,
   },
   {
-    match: (kw) => kw.category === 'dental' && ['서울', '도봉구', '창동', '쌍문동', '방학동', '녹천역', '노원구'].includes(kw.region),
+    match: (kw) => kw.category === 'dental' && ['도봉구', '창동', '쌍문동', '방학동', '녹천역', '노원구'].includes(kw.region),
     naverPlaceId: '1362748220',
     hospital: {
       id: '1362748220',
@@ -249,7 +249,7 @@ const PROMOTED_HOSPITALS: PromotedHospital[] = [
 `,
   },
   {
-    match: (kw) => kw.category === 'dental' && ['송파구', '가락동'].includes(kw.region),
+    match: (kw) => kw.category === 'dental' && ['송파구', '가락동', '서울'].includes(kw.region),
     naverPlaceId: '1709701276',
     hospital: {
       id: '1709701276',
