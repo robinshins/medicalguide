@@ -24,7 +24,7 @@ keywords.ts (9,025 region × specialty combinations, ordered by population)
     → scraper.ts (Puppeteer: Naver Place + KakaoMap + Google Maps)
     → matcher.ts (GPT-5.4-mini: cross-platform hospital name/address matching)
     → generator.ts (Vercel backup path, still claude-sonnet-5 → GPT-5.4-mini)
-    → publish-action.js (the real GitHub Actions path: gpt-6-luna Korean article → deepseek-flash (DeepSeek-V4.1-Flash) 12 language translations, since 2026-09-24)
+    → publish-action.js (the real GitHub Actions path: gpt-6-luna Korean article since 2026-09-24 → gpt-6-luna 12 language translations since 2026-11-26, reasoning effort low; deepseek-flash before that)
     → publish.ts (orchestrator: queue management + Firestore save)
 ```
 

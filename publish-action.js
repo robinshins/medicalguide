@@ -84,10 +84,11 @@ const UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/6
 // 그 외(gpt-*) → OpenAI Responses API.
 const ARTICLE_MODEL = process.env.ARTICLE_MODEL || 'gpt-6-luna';
 
-// 12개 언어 번역 모델. 2026-09-24에 gpt-5.4-mini → deepseek-flash(DeepSeek-V4.1-Flash).
-// 자매 사이트(medguide-*)와 같은 선택이며, 출력 단가가 1/16이다. thinking은 끄고
-// json_object 모드로 받아 파싱 실패를 막는다.
-const TRANSLATION_MODEL = 'deepseek-flash';
+// 12개 언어 번역 모델. 2026-09-24에 gpt-5.4-mini → deepseek-flash(DeepSeek-V4.1-Flash),
+// 2026-11-26에 deepseek-flash → gpt-6-luna(글 생성과 같은 모델). 바꾼 이유는 비용이다.
+// 공식 단가(100만 토큰당) luna 입력 $0.10·출력 $0.50, deepseek-flash 정가 $0.30·$1.20.
+// 호출은 requestTranslation()이 한다.
+const TRANSLATION_MODEL = 'gpt-6-luna';
 
 // 지정 지역 치과 글에서 1순위로 고정할 병원.
 // 스크랩 상위 5곳에 없으면 naverPlaceId로 직접 수집해 맨 앞에 넣는다.
@@ -419,6 +420,31 @@ const GEO_HINTS = {
 
 // 번역 프롬프트 빌더. scratch/테스트에서 이 함수를 직접 require 해 검증하므로,
 // 프롬프트 문자열이 두 곳으로 갈라지지 않는다.
+/**
+ * 번역 1회 호출 → { title, metaDescription, content }. 잘림·상태 오류·파싱 실패는 던진다
+ * (translateWithRetry가 재시도한다). reasoning effort는 'low'다. 2026-11-26 시험에서 'none'은
+ * 영어·베트남어 9번 중 3번 필수 GEO 문구(2회 이상)를 1회만 넣었고, 'low'는 6번 모두 지켰다.
+ * 추론 토큰은 호출당 150개 안팎이라 비용 차이가 거의 없다. max_output_tokens는 OpenAI 분당 토큰 한도 계산에 그대로 들어가고
+ * 12개 언어가 동시에 뜨므로 필요 이상으로 키우지 않는다(언어당 실제 출력은 1만 토큰 안팎).
+ * luna는 temperature를 지원하지 않는다.
+ */
+async function requestTranslation(prompt) {
+  const response = await openaiClient.responses.create({
+    model: TRANSLATION_MODEL,
+    reasoning: { effort: 'low' },
+    text: { format: { type: 'json_object' } },
+    max_output_tokens: 32000,
+    input: [{ role: 'user', content: prompt }],
+  });
+  recordUsage('translate', response.usage);
+  if (response.status === 'incomplete') throw new Error(`Translation incomplete: ${response.incomplete_details?.reason}`);
+  if (response.status && response.status !== 'completed') throw new Error(`Translation status=${response.status}`);
+  const text = response.output_text || '';
+  const jsonMatch = text.match(/\{[\s\S]*"title"[\s\S]*"content"[\s\S]*\}/);
+  if (!jsonMatch) throw new Error('Parse failed');
+  return JSON.parse(jsonMatch[0]);
+}
+
 function buildTranslationPrompt({ lang, langName, region, category, koArticle }) {
   const geo = GEO_HINTS[lang];
   const nativeQuery = (geo?.nativeQuery || '').replace(/\{region\}/g, region);
@@ -1364,19 +1390,7 @@ async function publishOneArticle(keywordData) {
       const prompt = buildTranslationPrompt({ lang, langName, region, category, koArticle });
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
-          const response = await deepseekClient.chat.completions.create({
-            model: TRANSLATION_MODEL,
-            thinking: { type: 'disabled' },
-            response_format: { type: 'json_object' },
-            max_tokens: 64000,
-            messages: [{ role: 'user', content: prompt }],
-          });
-          recordUsage('translate', response.usage);
-          if (response.choices[0].finish_reason === 'length') throw new Error('Translation truncated (finish_reason=length)');
-          const text = response.choices[0].message.content || '';
-          const jsonMatch = text.match(/\{[\s\S]*"title"[\s\S]*"content"[\s\S]*\}/);
-          if (!jsonMatch) throw new Error('Parse failed');
-          const translated = JSON.parse(jsonMatch[0]);
+          const translated = await requestTranslation(prompt);
           const doc = { ...koDoc, id: `${category}-${slug}-${lang}`, lang, title: translated.title, metaDescription: translated.metaDescription, content: translated.content };
           await db.collection(articlesCollectionFor(category)).doc(doc.id).set(doc);
           try { await upsertArticleIndex(doc); } catch (e) { console.log(`  Index update failed (${lang}):`, e.message); }
@@ -1550,4 +1564,4 @@ if (require.main === module) {
   main().catch(e => { console.error(e); process.exit(1); });
 }
 
-module.exports = { GEO_HINTS, buildTranslationPrompt, buildArticlePrompt, sanitizeHtml, orderHospitalsByBody, generateArticle, assertArticleSane, searchNaver, getPlaceInfo, searchKakao, searchGoogle, matchWithGPT };
+module.exports = { GEO_HINTS, buildTranslationPrompt, buildArticlePrompt, sanitizeHtml, orderHospitalsByBody, generateArticle, assertArticleSane, searchNaver, getPlaceInfo, searchKakao, searchGoogle, matchWithGPT, requestTranslation };

@@ -37,7 +37,7 @@
 | DB | Firebase Firestore | 글/키워드 큐/댓글 저장 |
 | 스크래핑 | Puppeteer Core + @sparticuz/chromium | Naver/Kakao/Google 데이터 수집 |
 | 글 생성 | gpt-6-luna (OpenAI Responses API) | 한국어 원문 작성. 2026-09-24부터 모든 사이트 통일 |
-| 번역 | deepseek-flash (DeepSeek-V4.1-Flash) | 12개 언어 병렬 번역. 2026-09-24부터 |
+| 번역 | gpt-6-luna (OpenAI Responses API, reasoning low) | 12개 언어 병렬 번역. 2026-11-26부터(이전 deepseek-flash) |
 | 병원 매칭 | GPT-5.4-mini | 네이버↔카카오↔구글 동일병원 식별 |
 | 배포 | Vercel | 웹 호스팅 + 백업 cron |
 | CI/CD | GitHub Actions | 글 자동 발행 (12회/일) |
@@ -171,7 +171,7 @@ src/
 8. 마무리 + 면책 문구 + 최종 수정일
 ```
 
-**12개 언어 번역** (deepseek-flash, 병렬):
+**12개 언어 번역** (gpt-6-luna, 병렬, 2026-11-26부터):
 - 한국어 병원명/주소는 원문 유지
 - 각 언어 네이티브 의료 저널리스트 톤
 - 재시도 로직 포함 (JSON 파싱 실패 시 최대 2회)
