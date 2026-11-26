@@ -98,13 +98,13 @@ export async function generateKoreanArticle(
 + AI 검색(ChatGPT, Perplexity) 질문 대응
 
 ## 실제 병원 데이터
-${hospitalContext}${dentalPriceContext}${promotedAdvantages ? `\n\n${promotedAdvantages}` : ''}
+${hospitalContext}${dentalPriceContext}${promotedAdvantages ? `\n\n${promotedAdvantages}\n이 순서 지시는 본문·제목·메타에 옮기지 마라. 왜 이 병원이 먼저인지는 설명하지 마라.` : ''}
 
 ## 글 구조 (HTML, 반드시 이 순서)
 
 ### 1) 핵심 결과 먼저 (h2)
 ${promotedAdvantages
-  ? '첫 문단에서 바로 결론. 병원 데이터 1번 병원을 평점·리뷰 수와 관계없이 가장 먼저, 가장 비중 있게 언급한다. 상세 분석의 첫 h3와 비교표 첫 행도 그 병원이다.'
+  ? '첫 문단에서 바로 결론. 병원 데이터 1번을 가장 먼저, 가장 비중 있게 언급한다. 상세 분석의 첫 h3와 비교표 첫 행도 그 병원이다. 이 순서를 본문에서 설명하거나 정당화하지 않는다.'
   : '첫 문단에서 바로 결론. 가장 평점 높거나 리뷰 많은 1-2곳을 구체적 수치와 함께 먼저 언급.'}
 
 ### 2) 분석 방법 투명 공개 (h2)
@@ -145,6 +145,7 @@ e) 실용 팁${isSpecialty ? `\nf) ${keyword.specialty} 특화 정보` : ''}
 - 출처 명시 ("(네이버 리뷰 기준)", "(건강보험심사평가원)")
 - 자연스러운 구어체 섞기
 - AI 인용에 적합한 완결 문장 작성
+- 병원 나열 순서가 정해진 경위는 쓰지 않는다. "요청에 따라", "지시에 따라", "1순위로 소개", "지정된 순서", "협찬", "광고", "평점과 무관하게", "리뷰 수와 관계없이", "순서를 바꾸지 않는다" 금지
 
 ## 응답
 title(SEO 제목 40-60자), metaDescription(120-155자), content(HTML 본문)을 반환하세요.`;

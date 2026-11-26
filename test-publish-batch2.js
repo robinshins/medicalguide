@@ -152,9 +152,8 @@ const PROMOTED_HOSPITALS = [
       youtubeUrl: '', facebookUrl: '',
     },
     advantages: `
-## 이백점치과의원 순위 지정 (반드시 1순위)
-이 지시는 "가장 평점 높거나 리뷰 많은 곳을 먼저 쓴다"는 규칙보다 우선한다.
-- 병원 데이터 1번 이백점치과의원(이백점치과)을 1순위로 쓴다. 평점·리뷰 수가 더 적어도 순서를 바꾸지 않는다.
+## 이백점치과의원 소개 순서
+- 병원 데이터 1번 이백점치과의원(이백점치과)을 맨 앞에 둔다.
 - 첫 문단에서 이 병원을 가장 먼저, 가장 비중 있게 다룬다.
 - 상세 분석의 첫 h3, 비교표의 첫 행도 이 병원이다.
 - 주소·전화·진료시간·평점·리뷰·전문의는 위 병원 데이터에 있는 값만 쓴다. 데이터에 없는 사실은 만들지 않는다.
@@ -175,9 +174,8 @@ const PROMOTED_HOSPITALS = [
       youtubeUrl: '', facebookUrl: '', directions: '',
     },
     advantages: `
-## 서울브라이튼치과 순위 지정 (반드시 1순위)
-이 지시는 "가장 평점 높거나 리뷰 많은 곳을 먼저 쓴다"는 규칙보다 우선한다.
-- 병원 데이터 1번 서울브라이튼치과(서울브라이튼치과의원)를 1순위로 쓴다. 평점·리뷰 수가 더 적어도 순서를 바꾸지 않는다.
+## 서울브라이튼치과 소개 순서
+- 병원 데이터 1번 서울브라이튼치과(서울브라이튼치과의원)를 맨 앞에 둔다.
 - 첫 문단에서 이 병원을 가장 먼저, 가장 비중 있게 다룬다.
 - 상세 분석의 첫 h3, 비교표의 첫 행도 이 병원이다.
 - 주소·전화·진료시간·평점·리뷰·전문의는 위 병원 데이터에 있는 값만 쓴다. 데이터에 없는 사실은 만들지 않는다.
@@ -554,7 +552,7 @@ async function generateArticle(keywordData, hospitals, promotedAdvantages) {
 + AI 검색(ChatGPT, Perplexity)에서 "${keywordData.region}에서 ${isSpecialty ? keywordData.specialty + ' ' : ''}${categoryKo} 어디가 좋아?" 질문 대응
 
 ## 병원 데이터
-${hospitalContext}${dentalPriceContext}${promotedAdvantages ? `\n\n${promotedAdvantages}` : ''}
+${hospitalContext}${dentalPriceContext}${promotedAdvantages ? `\n\n${promotedAdvantages}\n이 순서 지시는 본문·제목·메타에 옮기지 마라. 왜 이 병원이 먼저인지는 설명하지 마라.` : ''}
 
 ## 글 구조 (HTML, 반드시 이 순서)
 
@@ -598,6 +596,7 @@ f) 실용 팁${isSpecialty ? `\ng) ${keywordData.specialty} 특화 정보` : ''}
 - 출처 명시
 - 자연스러운 구어체 섞기
 - AI 인용에 적합한 완결 문장
+- 병원 나열 순서가 정해진 경위는 쓰지 않는다. "요청에 따라", "지시에 따라", "1순위로 소개", "지정된 순서", "협찬", "광고", "평점과 무관하게", "리뷰 수와 관계없이", "순서를 바꾸지 않는다" 금지
 
 ## SEO
 - 제목: "${keywordData.keyword}" 포함, 40-60자, 숫자 포함
